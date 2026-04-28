@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sigiriya Fortress</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="portrait-warning">
+        <div class="warning-box">
+            <div class="rotate-icon">📱🔄</div>
+            <h2>Please Rotate Device!</h2>
+            <p>Please hold your device in Landscape mode for the best experience.</p>
+        </div>
+    </div>
+
+    <div id="top-left-container">
+        <div id="ui-resources" class="premium-panel">
+            <div class="resource">
+                <span class="icon gold-icon">🪙</span>
+                <div class="res-col">
+                    <span class="label">GOLD</span>
+                    <span id="gold-count" class="val">1000</span>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="resource">
+                <span class="icon rice-icon">🌾</span>
+                <div class="res-col">
+                    <span class="label">RICE</span>
+                    <span id="rice-count" class="val">500</span>
+                </div>
+            </div>
+        </div>
+        <div id="pan-btn" class="premium-panel">
+            🗺️ PAN MAP TO EXPLORE
+        </div>
+        <div id="system-message"></div>
+    </div>
+
+    <div id="top-right-container">
+        <button class="icon-btn premium-panel">⚙️</button>
+        <button class="icon-btn premium-panel">🔲</button>
+        <button id="btn-zoom-in" class="icon-btn premium-panel">➕</button>
+        <button id="btn-zoom-out" class="icon-btn premium-panel">➖</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="bottom-dock-wrapper">
+        <div id="ui-bottom" class="premium-panel">
+            </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
