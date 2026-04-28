@@ -31,7 +31,7 @@ const GameState = {
     selectedUnit: null,
     palaceLevel: 1, frameCount: 0,
     difficulty: 'normal', 
-    isPaused: false
+    isPaused: false // Game starts playing initially
 };
 
 const TILE_W = 64; const TILE_H = 32;  
@@ -649,22 +649,6 @@ function handleGameLogic() {
     else if (GameState.phase === 'combat') {
         GameState.combatFrameCount++; 
 
-        // --- GAME OVER CHECK ---
-        // Palace inka unda ani check cheyadam
-        let palaceExists = GameState.buildings.some(b => b.type === 'Palace');
-        if (!palaceExists) {
-            GameState.phase = 'game_over';
-            GameState.isPaused = true;
-            
-            let goPopup = document.getElementById('game-over-popup');
-            if(goPopup) {
-                let lvlText = document.getElementById('game-over-level-text');
-                if(lvlText) lvlText.innerText = `You survived until Level ${GameState.level}.`;
-                goPopup.style.display = 'block';
-            }
-            return; // Game over aithe inkem action jaragadu
-        }
-
         if (GameState.level === 1 && GameState.combatFrameCount === 180 && !GameState.midCombatAdviceGiven) {
             GameState.midCombatAdviceGiven = true;
             let combatAdvice = [];
@@ -695,7 +679,29 @@ function handleGameLogic() {
             }
             GameState.enemiesSpawned = true;
         } else {
-            if (GameState.enemies.length === 0) {
+            // --- GAME OVER CHECK ---
+            if (GameState.phase !== 'game_over' && GameState.phase !== 'game_over_delay') {
+                let anyBuildingExists = GameState.buildings.length > 0;
+                if (!anyBuildingExists) {
+                    GameState.phase = 'game_over_delay';
+                    
+                    // 3 seconds delay before showing the popup
+                    setTimeout(() => {
+                        GameState.phase = 'game_over';
+                        GameState.isPaused = true; 
+                        
+                        let goPopup = document.getElementById('game-over-popup');
+                        if(goPopup) {
+                            let lvlText = document.getElementById('game-over-level-text');
+                            if(lvlText) lvlText.innerText = `You survived until Level ${GameState.level}.`;
+                            goPopup.style.display = 'block';
+                        }
+                    }, 3000);
+                    return; // Stop checking win condition
+                }
+            }
+
+            if (GameState.enemies.length === 0 && GameState.phase !== 'game_over_delay' && GameState.phase !== 'game_over') {
                 
                 // Bonus Multiplier based on Difficulty setting
                 let rewardMult = GameState.difficulty === 'hard' ? 1.5 : (GameState.difficulty === 'easy' ? 0.5 : 1);
@@ -908,7 +914,7 @@ window.addEventListener('DOMContentLoaded', () => {
         goPopup.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(20, 5, 5, 0.95); border:2px solid #FF0000; border-radius:15px; padding:40px; text-align:center; z-index:10005; color:white; box-shadow:0 10px 50px rgba(255,0,0,0.6);";
         goPopup.innerHTML = `
             <h1 style="font-family:var(--font-heading); color:#FF4500; margin:0 0 15px 0; font-size:40px; text-shadow: 2px 2px 5px black;">💀 GAME OVER 💀</h1>
-            <p style="margin:10px 0; font-size:20px; font-family:var(--font-body);">Your Palace has been destroyed by the enemies!</p>
+            <p style="margin:10px 0; font-size:20px; font-family:var(--font-body);">Your base has been destroyed!</p>
             <p id="game-over-level-text" style="margin:5px 0 25px 0; font-size:18px; color:#aaa;">You survived until Level 1.</p>
             <button id="btn-restart-game" style="background: linear-gradient(180deg, #8B0000 0%, #500000 100%); border: 1px solid #FF6347; color: #fff; padding: 12px 35px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6); transition: 0.2s;">
                 🔄 RESTART GAME
