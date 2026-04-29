@@ -93,3 +93,27 @@ canvas:active { cursor: grabbing; }
 .rotate-icon { font-size: 60px; animation: rotatePhone 2s infinite ease-in-out; }
 @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 @media screen and (orientation: portrait) and (max-width: 900px) { #portrait-warning { display: flex; } }
+
+/* --- ADDED FOR MOBILE RESPONSIVENESS (Landscape scale down) --- */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    #bottom-dock-wrapper {
+        transform: translateX(-50%) scale(0.75);
+        transform-origin: bottom center;
+    }
+    #top-left-container {
+        transform: scale(0.75);
+        transform-origin: top left;
+    }
+    #top-right-container {
+        transform: scale(0.75);
+        transform-origin: top right;
+    }
+    #level-status-container {
+        transform: translateX(-50%) scale(0.75) !important;
+        transform-origin: top center;
+    }
+    #ai-guide-panel {
+        transform: scale(0.75);
+        transform-origin: top left;
+    }
+}

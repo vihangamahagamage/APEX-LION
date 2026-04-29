@@ -1,6 +1,5 @@
 // --- 1. Image Path Configuration ---
 const imagePaths = {
-    // ඔයාගේ Lands වලට අදාල පින්තූර මෙතනට දෙන්න
     land1: "Assets/background.svg", 
     land2: "Assets/background2.png", 
     land3: "", 
@@ -45,7 +44,7 @@ const GameState = {
     difficulty: 'normal', 
     currentLand: 'land1', 
     isPaused: false,
-    tutorialState: 'inactive' // Tutorial එකේ State එක
+    tutorialState: 'inactive' 
 };
 
 const TILE_W = 64; const TILE_H = 32;  
@@ -57,6 +56,7 @@ let MAX_ZOOM = 4.0;
 let MIN_ZOOM = 0.2; 
 
 let isDragging = false; let dragStart = { x: 0, y: 0 }; let touchMoved = false; 
+let initialPinchDistance = null; // --- ADDED FOR MOBILE ZOOM ---
 let advisorTimeouts = []; 
 
 const canvas = document.getElementById('gameCanvas');
@@ -1072,26 +1072,68 @@ canvas.addEventListener('mousemove', (e) => {
 
 window.addEventListener('mouseup', () => { isDragging = false; if (GameState.mode === 'normal') canvas.style.cursor = 'grab'; });
 
+// --- UPDATED TOUCH CONTROLS FOR MOBILE (DRAG & ZOOM) ---
 canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+        e.preventDefault(); 
+        initialPinchDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        return;
+    }
+
     touchMoved = false;
-    if (GameState.mode === 'normal') { isDragging = true; dragStart.x = e.touches[0].clientX - camera.x; dragStart.y = e.touches[0].clientY - camera.y; } 
-    else if (GameState.mode === 'placement_mode') { const gridPos = screenToIso(e.touches[0].clientX, e.touches[0].clientY); mouse.gridX = Math.floor(gridPos.x); mouse.gridY = Math.floor(gridPos.y); }
+    if (GameState.mode === 'normal') { 
+        isDragging = true; 
+        dragStart.x = e.touches[0].clientX - camera.x; 
+        dragStart.y = e.touches[0].clientY - camera.y; 
+    } else if (GameState.mode === 'placement_mode') { 
+        const gridPos = screenToIso(e.touches[0].clientX, e.touches[0].clientY); 
+        mouse.gridX = Math.floor(gridPos.x); 
+        mouse.gridY = Math.floor(gridPos.y); 
+    }
 }, {passive: false});
 
 canvas.addEventListener('touchmove', (e) => { 
+    e.preventDefault(); // Prevents mobile browser pull-to-refresh & scrolling
     touchMoved = true; 
-    if (isDragging) { 
-        camera.x = e.touches[0].clientX - dragStart.x; camera.y = e.touches[0].clientY - dragStart.y; 
+    
+    // Zoom Logic
+    if (e.touches.length === 2 && initialPinchDistance !== null) {
+        let currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        let diff = currentDistance - initialPinchDistance;
+        let centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        let centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        
+        doZoom(diff * 0.005, centerX, centerY); 
+        initialPinchDistance = currentDistance;
+        return;
+    }
+
+    // Drag Logic
+    if (isDragging && e.touches.length === 1) { 
+        camera.x = e.touches[0].clientX - dragStart.x; 
+        camera.y = e.touches[0].clientY - dragStart.y; 
         let oldX = camera.x; let oldY = camera.y; clampCamera(); 
         if (camera.x !== oldX) dragStart.x = e.touches[0].clientX - camera.x;
         if (camera.y !== oldY) dragStart.y = e.touches[0].clientY - camera.y;
     } 
 }, {passive: false});
 
-window.addEventListener('touchend', () => { isDragging = false; });
+window.addEventListener('touchend', (e) => { 
+    isDragging = false; 
+    if (e.touches.length < 2) {
+        initialPinchDistance = null;
+    }
+});
+// --------------------------------------------------------
 
 canvas.addEventListener('click', (e) => {
-    if (GameState.isPaused) return; // Ignore clicks if paused
+    if (GameState.isPaused) return; 
     if (touchMoved || (e.target && e.target.tagName === 'BUTTON')) return; 
 
     if (GameState.mode === 'normal') {
@@ -1118,7 +1160,7 @@ canvas.addEventListener('click', (e) => {
         // --- TUTORIAL CLICK LOGIC ---
         if (clickedFriendly) {
             if (GameState.tutorialState === 'select_troop') {
-                GameState.tutorialState = 'command_attack'; // Next step
+                GameState.tutorialState = 'command_attack'; 
                 showRoyalAdvisor([
                     "Excellent! The soldier is ready for your command.",
                     "Now, CLICK on an Enemy to order the attack!"
@@ -1136,7 +1178,7 @@ canvas.addEventListener('click', (e) => {
             }
 
             if (GameState.tutorialState === 'command_attack') {
-                GameState.tutorialState = 'done'; // Finish tutorial
+                GameState.tutorialState = 'done'; 
                 showRoyalAdvisor([
                     "Brilliant strategy, My Lord!",
                     "Your troops will now engage the target.",
@@ -1293,18 +1335,16 @@ function drawGame() {
             
             if (GameState.tutorialState === 'select_troop') {
                 let troops = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
-                let target = troops[0]; // Point at the first available troop
+                let target = troops[0]; 
                 if (target) {
                     let pos = isoToScreen(target.x, target.y);
                     let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
                     
                     ctx.save();
-                    // Draw bouncing pointing hand
                     ctx.font = "50px Arial";
                     ctx.textAlign = "center";
                     ctx.fillText("👇", pos.x, pos.y - 50 - bob);
                     
-                    // Draw pulsing green ring
                     let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10;
                     ctx.beginPath();
                     ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2);
@@ -1315,18 +1355,16 @@ function drawGame() {
                 }
             } 
             else if (GameState.tutorialState === 'command_attack' && GameState.selectedUnit) {
-                let targetEnemy = GameState.enemies[0]; // Point at the first available enemy
+                let targetEnemy = GameState.enemies[0]; 
                 if (targetEnemy) {
                     let pos = isoToScreen(targetEnemy.x, targetEnemy.y);
                     let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
                     
                     ctx.save();
-                    // Draw bouncing pointing hand
                     ctx.font = "50px Arial";
                     ctx.textAlign = "center";
                     ctx.fillText("👇", pos.x, pos.y - 50 - bob);
                     
-                    // Draw pulsing red ring
                     let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10;
                     ctx.beginPath();
                     ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2);
