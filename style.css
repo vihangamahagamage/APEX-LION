@@ -94,37 +94,41 @@ canvas:active { cursor: grabbing; }
 @keyframes rotatePhone { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
 @media screen and (orientation: portrait) and (max-width: 900px) { #portrait-warning { display: flex; } }
 
-/* --- ADDED FOR MOBILE RESPONSIVENESS (Landscape scale down) --- */
-@media screen and (max-height: 500px) and (orientation: landscape) {
-    #bottom-dock-wrapper {
-        transform: translateX(-50%) scale(0.75);
-        transform-origin: bottom center;
+/* --- ADDED FOR MOBILE RESPONSIVENESS (Responsive scaling for all small screens) --- */
+
+/* Tablets & Small Desktops */
+@media screen and (max-width: 1024px) {
+    #bottom-dock-wrapper { transform: translateX(-50%) scale(0.8); transform-origin: bottom center; }
+    #top-left-container { transform: scale(0.8); transform-origin: top left; }
+    #top-right-container { transform: scale(0.8); transform-origin: top right; }
+    /* This scales down the center panel and pushes it slightly up */
+    #level-status-container { 
+        transform: translateX(-50%) scale(0.7) !important; 
+        transform-origin: top center; 
+        top: 15px !important; 
     }
-    #top-left-container {
-        transform: scale(0.75);
-        transform-origin: top left;
-    }
-    #top-right-container {
-        transform: scale(0.75);
-        transform-origin: top right;
-    }
-    #level-status-container {
-        transform: translateX(-50%) scale(0.75) !important;
-        transform-origin: top center;
-    }
-    /* Hide Royal Advisor and Zoom buttons on small landscape screens */
-    #ai-guide-panel,
-    #btn-zoom-in,
-    #btn-zoom-out {
-        display: none !important;
+    #ai-guide-panel, #btn-zoom-in, #btn-zoom-out { display: none !important; }
+}
+
+/* Mobile Phones */
+@media screen and (max-width: 768px) {
+    #bottom-dock-wrapper { transform: translateX(-50%) scale(0.7); }
+    #top-left-container { transform: scale(0.7); }
+    #top-right-container { transform: scale(0.7); }
+    #level-status-container { 
+        transform: translateX(-50%) scale(0.6) !important; 
+        top: 10px !important; 
     }
 }
 
-/* Also hide Royal Advisor and Zoom buttons generally on any mobile screen width */
-@media screen and (max-width: 900px) {
-    #ai-guide-panel,
-    #btn-zoom-in,
-    #btn-zoom-out {
-        display: none !important;
+/* Very Narrow Landscape Phones */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    #bottom-dock-wrapper { transform: translateX(-50%) scale(0.65); }
+    #top-left-container { transform: scale(0.65); }
+    #top-right-container { transform: scale(0.65); }
+    #level-status-container { 
+        transform: translateX(-50%) scale(0.55) !important; 
+        top: 5px !important; 
     }
+    #ai-guide-panel, #btn-zoom-in, #btn-zoom-out { display: none !important; }
 }
