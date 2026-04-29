@@ -316,6 +316,10 @@
   <div class="subtitle">The Legend of Hela Warriors</div>
 
   <div class="divider"></div>
+  
+  <div id="high-score-display" style="color: #FFD700; margin-top: 15px; font-family: 'Cinzel', serif; font-size: 18px; text-shadow: 0 2px 5px black; text-align: center;">
+      🏆 Best Record: Level <span id="best-level-text">0</span>
+  </div>
 
   <div class="btn-group">
     <button id="btn-play" class="btn btn-primary">
@@ -394,6 +398,17 @@ document.getElementById('btn-exit').addEventListener('click', () => {
         window.close(); 
     }
 });
+
+// --- High Score එක Local Storage එකෙන් අරන් පෙන්නන කෝඩ් එක ---
+window.addEventListener('DOMContentLoaded', () => {
+    let savedScore = localStorage.getItem('apexLionHighScore');
+    if(savedScore) {
+        document.getElementById('best-level-text').innerText = savedScore;
+    } else {
+        document.getElementById('best-level-text').innerText = '0';
+    }
+});
+
 </script>
 </body>
 </html>
