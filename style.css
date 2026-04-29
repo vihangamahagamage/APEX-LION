@@ -13,7 +13,6 @@
     --gold-light: #F9DF9F;
     --gold-dark: #AA7C11;
     --text-main: #E0E6ED;
-    /* Font එක Poppins වලට මාරු කළා */
     --font-heading: 'Poppins', sans-serif;
     --font-body: 'Poppins', sans-serif;
 }
@@ -62,7 +61,21 @@ canvas:active { cursor: grabbing; }
 .icon-btn:hover { background: #162545; border-color: var(--gold-light); transform: scale(1.05); }
 
 /* --- Bottom Build Dock --- */
-#bottom-dock-wrapper { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); width: max-content; max-width: 95vw; }
+#bottom-dock-wrapper { 
+    position: absolute; 
+    bottom: 15px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    z-index: 10; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+    width: max-content; 
+    max-width: 95vw; 
+}
+/* Default Hidden State offset for Desktop */
+#bottom-dock-wrapper.dock-hidden { bottom: -140px; }
 
 #ui-bottom { display: flex; gap: 10px; padding: 12px; overflow-x: auto; border-top: 2px solid var(--gold-primary); }
 #ui-bottom::-webkit-scrollbar { height: 6px; }
@@ -100,35 +113,28 @@ canvas:active { cursor: grabbing; }
 /* Tablets & Small Desktops */
 @media screen and (max-width: 1024px) {
     #bottom-dock-wrapper { transform: translateX(-50%) scale(0.8); transform-origin: bottom center; }
+    #bottom-dock-wrapper.dock-hidden { bottom: -110px !important; }
     #top-left-container { transform: scale(0.8); transform-origin: top left; }
     #top-right-container { transform: scale(0.8); transform-origin: top right; }
-    #level-status-container { 
-        transform: translateX(-50%) scale(0.7) !important; 
-        transform-origin: top center; 
-        top: 15px !important; 
-    }
+    #level-status-container { transform: translateX(-50%) scale(0.7) !important; transform-origin: top center; top: 15px !important; }
     #ai-guide-panel, #btn-zoom-in, #btn-zoom-out { display: none !important; }
 }
 
 /* Mobile Phones */
 @media screen and (max-width: 768px) {
     #bottom-dock-wrapper { transform: translateX(-50%) scale(0.7); }
+    #bottom-dock-wrapper.dock-hidden { bottom: -100px !important; }
     #top-left-container { transform: scale(0.7); }
     #top-right-container { transform: scale(0.7); }
-    #level-status-container { 
-        transform: translateX(-50%) scale(0.6) !important; 
-        top: 10px !important; 
-    }
+    #level-status-container { transform: translateX(-50%) scale(0.6) !important; top: 10px !important; }
 }
 
 /* Very Narrow Landscape Phones */
 @media screen and (max-height: 500px) and (orientation: landscape) {
     #bottom-dock-wrapper { transform: translateX(-50%) scale(0.65); }
+    #bottom-dock-wrapper.dock-hidden { bottom: -90px !important; }
     #top-left-container { transform: scale(0.65); }
     #top-right-container { transform: scale(0.65); }
-    #level-status-container { 
-        transform: translateX(-50%) scale(0.55) !important; 
-        top: 5px !important; 
-    }
+    #level-status-container { transform: translateX(-50%) scale(0.55) !important; top: 5px !important; }
     #ai-guide-panel, #btn-zoom-in, #btn-zoom-out { display: none !important; }
 }

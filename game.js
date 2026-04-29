@@ -890,18 +890,19 @@ function setupUIButtons() {
         toggleBtn.id = 'panel-toggle-btn';
         toggleBtn.innerHTML = '▼';
         
-        // Button now positioned directly relative to the wrapper
+        // CSS changed to stay inside the wrapper logic properly
         toggleBtn.style.cssText = "position:absolute; top:-25px; left:50%; transform:translateX(-50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-bottom:none; color:var(--gold-primary); font-size:12px; padding:4px 35px; border-radius:10px 10px 0 0; cursor:pointer; z-index:15; box-shadow:0 -4px 10px rgba(0,0,0,0.5); pointer-events:auto; touch-action:manipulation;";
         
         wrapper.appendChild(toggleBtn);
         
+        // Hide using CSS class instead of inline styles for perfect scaling
         toggleBtn.onpointerdown = function(e) {
             e.stopPropagation();
-            if (wrapper.style.bottom === '-160px') {
-                wrapper.style.bottom = '15px'; 
+            if (wrapper.classList.contains('dock-hidden')) {
+                wrapper.classList.remove('dock-hidden');
                 toggleBtn.innerHTML = '▼';
             } else {
-                wrapper.style.bottom = '-160px'; 
+                wrapper.classList.add('dock-hidden');
                 toggleBtn.innerHTML = '▲';
             }
         };
@@ -987,16 +988,27 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fullscreen Button
+    // Fullscreen Button (Cross-Browser support added)
     if(btnFullscreen) {
         btnFullscreen.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
+            let doc = window.document;
+            let docEl = doc.documentElement;
+
+            let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+            let cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+            if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
+                if(requestFullScreen) {
+                    requestFullScreen.call(docEl).catch(err => {
+                        showMessage("Fullscreen not supported on this device.", true);
+                    });
+                } else {
+                    showMessage("Fullscreen not supported on iOS Safari.", true);
+                }
+            }
+            else {
+                if(cancelFullScreen) {
+                    cancelFullScreen.call(doc);
                 }
             }
         });
