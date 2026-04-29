@@ -153,11 +153,23 @@ const svgs = {
 };
 
 const images = {};
+let totalAssets = 0;
+let loadedAssets = 0;
+
 function initImages() {
-    for (let key in imagePaths) {
+    let imageKeys = Object.keys(imagePaths);
+    totalAssets = imageKeys.length;
+    
+    imageKeys.forEach(key => {
         images[key] = new Image();
-        if (imagePaths[key]) images[key].src = imagePaths[key];
-        else {
+        
+        // Progress is incremented when an image loads successfully or fails.
+        images[key].onload = () => { assetLoaded(); };
+        images[key].onerror = () => { assetLoaded(); }; 
+
+        if (imagePaths[key]) {
+            images[key].src = imagePaths[key];
+        } else {
             const svgKey = key === 'elephantPen' ? 'elephantPenIcon' : 
                          key === 'paddyField' ? 'paddyFieldIcon' :
                          key === 'palace' ? 'palaceIcon' :
@@ -165,10 +177,38 @@ function initImages() {
                          key === 'stables' ? 'stablesIcon' :
                          key === 'tower' ? 'towerIcon' :
                          key === 'wall' ? 'wallIcon' : key;
-            if (svgs[svgKey] || svgs[key]) images[key].src = svgs[svgKey] || svgs[key];
+            if (svgs[svgKey] || svgs[key]) {
+                images[key].src = svgs[svgKey] || svgs[key];
+            } else {
+                assetLoaded(); // If there is no picture, move on.
+            }
         }
+    });
+}
+
+function assetLoaded() {
+    loadedAssets++;
+    let progress = Math.floor((loadedAssets / totalAssets) * 100);
+    
+    const progressBar = document.getElementById('progress-bar');
+    const loadingText = document.getElementById('loading-text');
+    
+    if (progressBar) progressBar.style.width = progress + '%';
+    if (loadingText) loadingText.innerText = progress + '%';
+
+    // After reaching 100%, wait half a second and then remove the loading screen.
+    if (loadedAssets >= totalAssets) {
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => { loadingScreen.style.display = 'none'; }, 500);
+            }
+        }, 500); 
     }
 }
+
 initImages();
 
 function isoToScreen(gridX, gridY) { return { x: (gridX - gridY) * (TILE_W / 2), y: (gridX + gridY) * (TILE_H / 2) }; }
@@ -178,7 +218,7 @@ function screenToIso(screenX, screenY) {
     return { x: (adjY / TILE_H) + (adjX / TILE_W), y: (adjY / TILE_H) - (adjX / TILE_W) };
 }
 
-// --- ගොඩනැගිලි අස්සෙන් යාම නවත්වන Function එක ---
+// --- Function that stops you from going near buildings ---
 function isBuildingBlocked(gx, gy) {
     if (gx < 0 || gx >= MAP_COLS || gy < 0 || gy >= MAP_ROWS) return true; 
     for (let b of GameState.buildings) {
@@ -749,6 +789,19 @@ function handleGameLogic() {
                 if (!anyBuildingExists) {
                     GameState.phase = 'game_over_delay';
                     
+                    // --- HIGH SCORE LOGIC ---
+                    // Take the previously saved one (or take 1).
+                    let bestScore = parseInt(localStorage.getItem('apexLionHighScore')) || 1;
+                    let isNewRecord = false;
+                    
+                    // If the current level is higher than the previous one, it will be saved.
+                    if (GameState.level > bestScore) {
+                        localStorage.setItem('apexLionHighScore', GameState.level);
+                        bestScore = GameState.level;
+                        isNewRecord = true;
+                    }
+                    // ---------------------------------
+                    
                     setTimeout(() => {
                         GameState.phase = 'game_over';
                         GameState.isPaused = true; 
@@ -756,7 +809,12 @@ function handleGameLogic() {
                         let goPopup = document.getElementById('game-over-popup');
                         if(goPopup) {
                             let lvlText = document.getElementById('game-over-level-text');
-                            if(lvlText) lvlText.innerText = `You survived until Level ${GameState.level}.`;
+                            if(lvlText) {
+                                // Game Over Popup desplay a new record
+                                lvlText.innerHTML = `You survived until Level ${GameState.level}.<br><br>
+                                <span style="color: #FFD700; font-weight: bold; font-size: 22px;">🏆 Best Record: Level ${bestScore}</span>
+                                ${isNewRecord ? '<br><span style="color: #00FA9A; font-size: 16px; font-weight: bold; display: block; margin-top: 10px;">🎉 NEW HIGH SCORE! 🎉</span>' : ''}`;
+                            }
                             goPopup.style.display = 'block';
                         }
                     }, 3000);
