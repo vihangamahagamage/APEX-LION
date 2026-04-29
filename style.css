@@ -13,8 +13,9 @@
     --gold-light: #F9DF9F;
     --gold-dark: #AA7C11;
     --text-main: #E0E6ED;
-    --font-heading: 'Cinzel', serif;
-    --font-body: 'Lato', sans-serif;
+    /* Font එක Poppins වලට මාරු කළා */
+    --font-heading: 'Poppins', sans-serif;
+    --font-body: 'Poppins', sans-serif;
 }
 
 body, html {
@@ -101,7 +102,6 @@ canvas:active { cursor: grabbing; }
     #bottom-dock-wrapper { transform: translateX(-50%) scale(0.8); transform-origin: bottom center; }
     #top-left-container { transform: scale(0.8); transform-origin: top left; }
     #top-right-container { transform: scale(0.8); transform-origin: top right; }
-    /* This scales down the center panel and pushes it slightly up */
     #level-status-container { 
         transform: translateX(-50%) scale(0.7) !important; 
         transform-origin: top center; 

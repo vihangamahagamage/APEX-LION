@@ -56,7 +56,7 @@ let MAX_ZOOM = 4.0;
 let MIN_ZOOM = 0.2; 
 
 let isDragging = false; let dragStart = { x: 0, y: 0 }; let touchMoved = false; 
-let initialPinchDistance = null; // --- ADDED FOR MOBILE ZOOM ---
+let initialPinchDistance = null; 
 let advisorTimeouts = []; 
 
 const canvas = document.getElementById('gameCanvas');
@@ -234,7 +234,8 @@ class FloatingText {
         const progress = 1 - (this.life / this.maxLife);
         const pos = isoToScreen(this.gridX, this.gridY);
         ctx.save(); ctx.globalAlpha = Math.max(0, this.life / (this.maxLife * 0.5));
-        ctx.font = 'bold 24px "Lato", sans-serif'; ctx.textAlign = 'center';
+        ctx.font = 'bold 24px "Poppins", sans-serif'; 
+        ctx.textAlign = 'center';
         ctx.lineWidth = 4; ctx.strokeStyle = 'black'; ctx.strokeText(this.text, pos.x, pos.y - 50 - (progress * 60));
         ctx.fillStyle = this.color; ctx.fillText(this.text, pos.x, pos.y - 50 - (progress * 60));
         ctx.restore();
@@ -888,18 +889,19 @@ function setupUIButtons() {
         const toggleBtn = document.createElement('button');
         toggleBtn.id = 'panel-toggle-btn';
         toggleBtn.innerHTML = '▼';
-        toggleBtn.style.cssText = "position:absolute; bottom:143px; left:50%; transform:translateX(-50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-bottom:none; color:var(--gold-primary); font-size:12px; padding:4px 35px; border-radius:10px 10px 0 0; cursor:pointer; z-index:15; transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow:0 -4px 10px rgba(0,0,0,0.5); pointer-events:auto; touch-action:manipulation;";
-        document.body.appendChild(toggleBtn);
+        
+        // Button now positioned directly relative to the wrapper
+        toggleBtn.style.cssText = "position:absolute; top:-25px; left:50%; transform:translateX(-50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-bottom:none; color:var(--gold-primary); font-size:12px; padding:4px 35px; border-radius:10px 10px 0 0; cursor:pointer; z-index:15; box-shadow:0 -4px 10px rgba(0,0,0,0.5); pointer-events:auto; touch-action:manipulation;";
+        
+        wrapper.appendChild(toggleBtn);
         
         toggleBtn.onpointerdown = function(e) {
             e.stopPropagation();
             if (wrapper.style.bottom === '-160px') {
                 wrapper.style.bottom = '15px'; 
-                toggleBtn.style.bottom = '143px'; 
                 toggleBtn.innerHTML = '▼';
             } else {
                 wrapper.style.bottom = '-160px'; 
-                toggleBtn.style.bottom = '0px';
                 toggleBtn.innerHTML = '▲';
             }
         };
@@ -909,13 +911,13 @@ function setupUIButtons() {
 window.addEventListener('DOMContentLoaded', () => {
     setupUIButtons();
 
-    // --- PAUSE & SETTINGS UI INJECTION ---
-    const topBtns = document.querySelectorAll('#top-right-container .icon-btn');
-    if(topBtns.length >= 2) {
-        const btnSettings = topBtns[0]; 
-        const btnPause = topBtns[1];    
+    // --- PAUSE, SETTINGS & FULLSCREEN UI INJECTION ---
+    const btnSettings = document.getElementById('btn-settings');
+    const btnPause = document.getElementById('btn-pause');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
 
-        // Settings Modal
+    // Settings Modal
+    if(btnSettings) {
         let settingsModal = document.createElement('div');
         settingsModal.id = 'settings-modal';
         settingsModal.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:15px; padding:30px; text-align:center; z-index:10001; color:white; box-shadow:0 10px 30px rgba(0,0,0,0.9);";
@@ -959,8 +961,10 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-close-settings').addEventListener('click', () => {
             settingsModal.style.display = 'none';
         });
+    }
 
-        // --- PAUSE GAME OVERLAY ---
+    // Pause Overlay
+    if(btnPause) {
         let pauseOverlay = document.createElement('div');
         pauseOverlay.id = 'pause-overlay';
         pauseOverlay.style.cssText = "display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(6, 11, 20, 0.85); z-index:10000; justify-content:center; align-items:center; flex-direction:column; backdrop-filter: blur(5px);";
@@ -980,6 +984,21 @@ window.addEventListener('DOMContentLoaded', () => {
         document.getElementById('btn-resume-game').addEventListener('click', () => {
             GameState.isPaused = false;
             pauseOverlay.style.display = 'none';
+        });
+    }
+
+    // Fullscreen Button
+    if(btnFullscreen) {
+        btnFullscreen.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
         });
     }
 
@@ -1096,7 +1115,7 @@ canvas.addEventListener('touchstart', (e) => {
 }, {passive: false});
 
 canvas.addEventListener('touchmove', (e) => { 
-    e.preventDefault(); // Prevents mobile browser pull-to-refresh & scrolling
+    e.preventDefault(); 
     touchMoved = true; 
     
     // Zoom Logic
@@ -1130,7 +1149,6 @@ window.addEventListener('touchend', (e) => {
         initialPinchDistance = null;
     }
 });
-// --------------------------------------------------------
 
 canvas.addEventListener('click', (e) => {
     if (GameState.isPaused) return; 
@@ -1341,7 +1359,7 @@ function drawGame() {
                     let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
                     
                     ctx.save();
-                    ctx.font = "50px Arial";
+                    ctx.font = '50px "Poppins", sans-serif';
                     ctx.textAlign = "center";
                     ctx.fillText("👇", pos.x, pos.y - 50 - bob);
                     
@@ -1361,7 +1379,7 @@ function drawGame() {
                     let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
                     
                     ctx.save();
-                    ctx.font = "50px Arial";
+                    ctx.font = '50px "Poppins", sans-serif';
                     ctx.textAlign = "center";
                     ctx.fillText("👇", pos.x, pos.y - 50 - bob);
                     
