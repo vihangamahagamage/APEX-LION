@@ -963,6 +963,9 @@ const getBtnHTML = (id, type, costGold, costRice, extraClass="") => `
     </button>
 `;
 
+
+// Adjust building prices (Gold, Rice) below:
+
 function setupUIButtons() {
     const uiBottom = document.getElementById('ui-bottom');
     if (uiBottom) { 
@@ -972,7 +975,7 @@ function setupUIButtons() {
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-barracks', 'Barracks', 150, 0));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-elephant', 'Elephant Pen', 300, 0));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-stables', 'Stables', 200, 0));
-        uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-wall', 'Wall', 50, 50));
+        uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-wall', 'Wall', 0, 50));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-tower', 'Tower', 100, 50));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-upgrade', 'Upgrade Palace', 500, 0, 'upgrade-btn'));
         uiBottom.insertAdjacentHTML('beforeend', `<button id="btn-cancel" class="build-btn hidden">CANCEL</button>`);
