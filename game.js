@@ -1,19 +1,31 @@
 // --- 1. Image Path Configuration ---
 const imagePaths = {
+    // ඔයාගේ Lands වලට අදාල පින්තූර මෙතනට දෙන්න
+    land1: "Assets/background.svg", 
+    land2: "Assets/background2.png", 
+    land3: "", 
+    
     tree: "", 
     lotus: "",
-    palace: "casel.png", 
-    barracks: "barracks.png",
-    elephantPen: "",
-    stables: "",
-    wall: "wall.png",
-    paddyField: "", 
-    tower: "tower.png",     
-    villager: "", 
-    soldier: "",   
-    elephant: "", 
-    horse: "",     
-    enemy: ""      
+    palace: "Assets/casel.png", 
+    barracks: "Assets/barracks.png",
+    elephantPen: "Assets/elephantpen.png",
+    stables: "Assets/stables.png",
+    wall: "Assets/wall.svg",
+    paddyField: "Assets/paddyField.png", 
+    tower: "Assets/tower.png",     
+    villager: "Assets/villager.png", 
+    soldier: "Assets/Soldier.png",   
+    elephant: "Assets/elephant.png", 
+    horse: "Assets/hourse.png",     
+    enemy: "Assets/enemy.png"      
+};
+
+// --- එක එක Land එකට අදාල Size සහ Position වෙන වෙනම හදාගන්න තැන ---
+const GRID_IMAGE_CONFIG = {
+    land1: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 },
+    land2: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }, 
+    land3: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }  
 };
 
 // --- Game State & Constants ---
@@ -31,7 +43,9 @@ const GameState = {
     selectedUnit: null,
     palaceLevel: 1, frameCount: 0,
     difficulty: 'normal', 
-    isPaused: false // Game starts playing initially
+    currentLand: 'land1', 
+    isPaused: false,
+    tutorialState: 'inactive' // Tutorial එකේ State එක
 };
 
 const TILE_W = 64; const TILE_H = 32;  
@@ -162,6 +176,17 @@ function screenToIso(screenX, screenY) {
     if (zoom === 0) zoom = MIN_ZOOM; 
     let adjX = (screenX - camera.x) / zoom; let adjY = (screenY - camera.y) / zoom;
     return { x: (adjY / TILE_H) + (adjX / TILE_W), y: (adjY / TILE_H) - (adjX / TILE_W) };
+}
+
+// --- ගොඩනැගිලි අස්සෙන් යාම නවත්වන Function එක ---
+function isBuildingBlocked(gx, gy) {
+    if (gx < 0 || gx >= MAP_COLS || gy < 0 || gy >= MAP_ROWS) return true; 
+    for (let b of GameState.buildings) {
+        if (b.type !== 'Paddy Field') { 
+            if (gx >= b.gridX && gx < b.gridX + b.size && gy >= b.gridY && gy < b.gridY + b.size) return true;
+        }
+    }
+    return false;
 }
 
 function isTileBlocked(gx, gy, selfObj) {
@@ -395,12 +420,21 @@ class CombatEntity {
                 const moves = [{dx:0,dy:1}, {dx:1,dy:0}, {dx:0,dy:-1}, {dx:-1,dy:0}];
                 const move = moves[Math.floor(Math.random() * moves.length)];
                 const nx = Math.floor(this.x) + move.dx; const ny = Math.floor(this.y) + move.dy;
-                if (!isTileBlocked(nx, ny, this)) { this.targetX = nx; this.targetY = ny; }
+                if (!isTileBlocked(nx, ny, this) && !isBuildingBlocked(nx, ny)) { this.targetX = nx; this.targetY = ny; }
             }
         } else { 
             this.isMoving = true;
             this.facingRight = dx - dy > 0.01;
-            this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; 
+            
+            let moveX = (dx / dist) * this.speed;
+            let moveY = (dy / dist) * this.speed;
+            
+            if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) {
+                this.x += moveX;
+            }
+            if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) {
+                this.y += moveY;
+            }
         }
     }
 }
@@ -436,10 +470,17 @@ class Villager extends CombatEntity {
                         const moves = [{dx:0,dy:1}, {dx:1,dy:0}, {dx:0,dy:-1}, {dx:-1,dy:0}];
                         const move = moves[Math.floor(Math.random() * moves.length)];
                         const nx = Math.floor(this.x) + move.dx; const ny = Math.floor(this.y) + move.dy;
-                        if (!isTileBlocked(nx, ny, this)) { this.targetX = nx; this.targetY = ny; }
+                        if (!isTileBlocked(nx, ny, this) && !isBuildingBlocked(nx, ny)) { this.targetX = nx; this.targetY = ny; }
                     }
                 }
-            } else { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; this.isMoving = true; this.facingRight = dx - dy > 0.01; }
+            } else { 
+                let moveX = (dx / dist) * this.speed; 
+                let moveY = (dy / dist) * this.speed; 
+                if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
+                if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
+                this.isMoving = true; 
+                this.facingRight = dx - dy > 0.01; 
+            }
         } else {
             this.moveUpdate(); 
         }
@@ -537,12 +578,22 @@ class Enemy extends CombatEntity {
                 this.isMoving = true;
                 const dx = (nearest.gridX || nearest.x) - this.x; const dy = (nearest.gridY || nearest.y) - this.y; const dist = Math.hypot(dx, dy);
                 this.facingRight = dx - dy > 0.01;
-                this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;
+                
+                let moveX = (dx / dist) * this.speed;
+                let moveY = (dy / dist) * this.speed;
+                if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
+                if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
             }
         } else {
             this.isMoving = true;
             const dx = 20 - this.x; const dy = 20 - this.y; const dist = Math.hypot(dx, dy);
-            if(dist > 0.5) { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; this.facingRight = dx - dy > 0.01; }
+            if(dist > 0.5) { 
+                let moveX = (dx / dist) * this.speed; 
+                let moveY = (dy / dist) * this.speed;
+                if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
+                if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
+                this.facingRight = dx - dy > 0.01; 
+            }
         }
     }
     draw(ctx, sx, sy) {
@@ -649,27 +700,39 @@ function handleGameLogic() {
     else if (GameState.phase === 'combat') {
         GameState.combatFrameCount++; 
 
+        // --- TUTORIAL / ADVICE TRIGGER ---
         if (GameState.level === 1 && GameState.combatFrameCount === 180 && !GameState.midCombatAdviceGiven) {
             GameState.midCombatAdviceGiven = true;
-            let combatAdvice = [];
-            if (GameState.gold >= 150) {
-                combatAdvice.push("Your Majesty, the enemy attacks! You have ample Gold.");
-                combatAdvice.push("Quickly build a Barracks to deploy Soldiers.");
-                combatAdvice.push("Tip: Click on a Soldier, then click an enemy to command them to attack!");
-            } else if (GameState.gold >= 50) {
-                combatAdvice.push("They approach fast! Use your remaining Gold to build Fortified Walls.");
-                combatAdvice.push("Walls will delay them while our Palace guards strike from afar!");
-                combatAdvice.push("Tip: You can click your troops to manually move them.");
+            
+            // Check if player has any combat troops
+            let combatUnits = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses];
+            
+            if (combatUnits.length > 0 && GameState.tutorialState === 'inactive') {
+                // START TUTORIAL
+                GameState.tutorialState = 'select_troop';
+                showRoyalAdvisor([
+                    "Your Majesty, the enemies are here!",
+                    "Let me show you how to command your troops.",
+                    "First, CLICK on one of your Soldiers to select them."
+                ]);
             } else {
-                combatAdvice.push("Our treasury is low! Trust in the strength of our Palace for this wave.");
-                combatAdvice.push("Next time, build Paddy Fields early to strengthen our economy.");
-                combatAdvice.push("Tip: Tap your defenders and direct them to the frontlines!");
+                // Normal Advice
+                let combatAdvice = [];
+                if (GameState.gold >= 150) {
+                    combatAdvice.push("Your Majesty, the enemy attacks! You have ample Gold.");
+                    combatAdvice.push("Quickly build a Barracks to deploy Soldiers.");
+                } else if (GameState.gold >= 50) {
+                    combatAdvice.push("They approach fast! Use your remaining Gold to build Fortified Walls.");
+                    combatAdvice.push("Walls will delay them while our Palace guards strike from afar!");
+                } else {
+                    combatAdvice.push("Our treasury is low! Trust in the strength of our Palace for this wave.");
+                    combatAdvice.push("Next time, build Paddy Fields early to strengthen our economy.");
+                }
+                showRoyalAdvisor(combatAdvice); 
             }
-            showRoyalAdvisor(combatAdvice); 
         }
 
         if (!GameState.enemiesSpawned) {
-            // Spawn Multiplier based on Difficulty setting
             let multiplier = GameState.difficulty === 'hard' ? 5 : (GameState.difficulty === 'easy' ? 2 : 3);
             let enemyCount = GameState.level * multiplier; 
             for (let i = 0; i < enemyCount; i++) {
@@ -685,7 +748,6 @@ function handleGameLogic() {
                 if (!anyBuildingExists) {
                     GameState.phase = 'game_over_delay';
                     
-                    // 3 seconds delay before showing the popup
                     setTimeout(() => {
                         GameState.phase = 'game_over';
                         GameState.isPaused = true; 
@@ -697,13 +759,12 @@ function handleGameLogic() {
                             goPopup.style.display = 'block';
                         }
                     }, 3000);
-                    return; // Stop checking win condition
+                    return; 
                 }
             }
 
             if (GameState.enemies.length === 0 && GameState.phase !== 'game_over_delay' && GameState.phase !== 'game_over') {
                 
-                // Bonus Multiplier based on Difficulty setting
                 let rewardMult = GameState.difficulty === 'hard' ? 1.5 : (GameState.difficulty === 'easy' ? 0.5 : 1);
                 
                 let goldBonus = Math.floor(GameState.level * 150 * rewardMult);
@@ -858,8 +919,19 @@ window.addEventListener('DOMContentLoaded', () => {
         let settingsModal = document.createElement('div');
         settingsModal.id = 'settings-modal';
         settingsModal.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:15px; padding:30px; text-align:center; z-index:10001; color:white; box-shadow:0 10px 30px rgba(0,0,0,0.9);";
+        
         settingsModal.innerHTML = `
             <h2 style="font-family:var(--font-heading); color:var(--gold-primary); margin-bottom:20px; font-size:24px;">⚙️ Game Settings</h2>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 18px; margin-right: 10px; font-family:var(--font-body);">Select Land:</label>
+                <select id="land-select" style="padding: 8px 12px; font-size: 16px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
+                    <option value="land1" selected>Land 1</option>
+                    <option value="land2">Land 2</option>
+                    <option value="land3">Land 3</option>
+                </select>
+            </div>
+
             <div style="margin-bottom: 25px;">
                 <label style="font-size: 18px; margin-right: 10px; font-family:var(--font-body);">Difficulty:</label>
                 <select id="difficulty-select" style="padding: 8px 12px; font-size: 16px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
@@ -874,6 +946,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
         btnSettings.addEventListener('click', () => {
             settingsModal.style.display = settingsModal.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.getElementById('land-select').addEventListener('change', (e) => {
+            GameState.currentLand = e.target.value;
         });
 
         document.getElementById('difficulty-select').addEventListener('change', (e) => {
@@ -1039,7 +1115,15 @@ canvas.addEventListener('click', (e) => {
             }
         }
 
+        // --- TUTORIAL CLICK LOGIC ---
         if (clickedFriendly) {
+            if (GameState.tutorialState === 'select_troop') {
+                GameState.tutorialState = 'command_attack'; // Next step
+                showRoyalAdvisor([
+                    "Excellent! The soldier is ready for your command.",
+                    "Now, CLICK on an Enemy to order the attack!"
+                ]);
+            }
             GameState.selectedUnit = clickedFriendly;
             GameState.floatingTexts.push(new FloatingText(clickedFriendly.x, clickedFriendly.y, "Ready!", "#00FF00"));
             return;
@@ -1049,6 +1133,15 @@ canvas.addEventListener('click', (e) => {
             let clickedEnemy = null;
             for (let en of GameState.enemies) {
                 if (getDistance({x: ex, y: ey}, en) < 0.8) { clickedEnemy = en; break; }
+            }
+
+            if (GameState.tutorialState === 'command_attack') {
+                GameState.tutorialState = 'done'; // Finish tutorial
+                showRoyalAdvisor([
+                    "Brilliant strategy, My Lord!",
+                    "Your troops will now engage the target.",
+                    "Defend the Palace at all costs!"
+                ]);
             }
 
             if (clickedEnemy) {
@@ -1128,26 +1221,56 @@ function drawGame() {
         GameState.horses = GameState.horses.filter(h => h.hp > 0);
         GameState.enemies = GameState.enemies.filter(e => e.hp > 0);
 
-        drawSigiriyaRockBase();
+        const currentLandKey = GameState.currentLand;
+        const gridImg = images[currentLandKey];
+        const config = GRID_IMAGE_CONFIG[currentLandKey];
+        
+        let useImageGrid = (imagePaths[currentLandKey] && imagePaths[currentLandKey] !== "" && gridImg && gridImg.complete && gridImg.naturalWidth > 0);
 
-        for (let y = 0; y < MAP_ROWS; y++) {
-            for (let x = 0; x < MAP_COLS; x++) {
-                const pos = isoToScreen(x, y); 
-                drawDiamond(ctx, pos.x, pos.y, (x + y) % 2 === 0 ? '#5A9E24' : '#4E8D1E', '#3E7017');
-                
-                if (GameState.mode === 'placement_mode') { 
-                    const size = GameState.selectedBuilding.size; const bx = mouse.gridX; const by = mouse.gridY;
-                    if (x >= bx && x < bx + size && y >= by && y < by + size) {
-                        let isBlocked = false;
-                        for(let dx=0; dx<size; dx++) for(let dy=0; dy<size; dy++) if (isTileBlocked(bx+dx, by+dy, null)) isBlocked = true;
-                        drawDiamond(ctx, pos.x, pos.y, isBlocked ? 'rgba(255, 0, 0, 0.6)' : 'rgba(0, 255, 0, 0.6)', '#fff');
+        if (useImageGrid) {
+            ctx.drawImage(gridImg, config.offsetX, config.offsetY, config.width, config.height);
+            
+            if (GameState.mode === 'placement_mode') { 
+                for (let y = 0; y < MAP_ROWS; y++) {
+                    for (let x = 0; x < MAP_COLS; x++) {
+                        const size = GameState.selectedBuilding.size; const bx = mouse.gridX; const by = mouse.gridY;
+                        if (x >= bx && x < bx + size && y >= by && y < by + size) {
+                            const pos = isoToScreen(x, y);
+                            let isBlocked = false;
+                            for(let dx=0; dx<size; dx++) for(let dy=0; dy<size; dy++) if (isTileBlocked(bx+dx, by+dy, null)) isBlocked = true;
+                            drawDiamond(ctx, pos.x, pos.y, isBlocked ? 'rgba(255, 0, 0, 0.6)' : 'rgba(0, 255, 0, 0.6)', '#fff');
+                        }
+                    }
+                }
+            }
+        } else {
+            drawSigiriyaRockBase();
+
+            for (let y = 0; y < MAP_ROWS; y++) {
+                for (let x = 0; x < MAP_COLS; x++) {
+                    const pos = isoToScreen(x, y); 
+                    drawDiamond(ctx, pos.x, pos.y, (x + y) % 2 === 0 ? '#5A9E24' : '#4E8D1E', '#3E7017');
+                    
+                    if (GameState.mode === 'placement_mode') { 
+                        const size = GameState.selectedBuilding.size; const bx = mouse.gridX; const by = mouse.gridY;
+                        if (x >= bx && x < bx + size && y >= by && y < by + size) {
+                            let isBlocked = false;
+                            for(let dx=0; dx<size; dx++) for(let dy=0; dy<size; dy++) if (isTileBlocked(bx+dx, by+dy, null)) isBlocked = true;
+                            drawDiamond(ctx, pos.x, pos.y, isBlocked ? 'rgba(255, 0, 0, 0.6)' : 'rgba(0, 255, 0, 0.6)', '#fff');
+                        }
                     }
                 }
             }
         }
 
         let renderQueue = [];
-        GameState.buildings.forEach(b => { if(!GameState.isPaused) b.update(); renderQueue.push({ obj: b, type: 'building', depth: b.gridX + b.gridY + (b.size - 1) * 2 }); });
+        
+        GameState.buildings.forEach(b => { 
+            if(!GameState.isPaused) b.update(); 
+            let d = b.gridX + b.gridY + (b.type === 'Paddy Field' ? -0.1 : b.size * 0.8);
+            renderQueue.push({ obj: b, type: 'building', depth: d }); 
+        });
+        
         GameState.villagers.forEach(v => { if(!GameState.isPaused) v.update(); renderQueue.push({ obj: v, type: 'villager', depth: v.x + v.y }); });
         GameState.soldiers.forEach(s => { if(!GameState.isPaused) s.update(); renderQueue.push({ obj: s, type: 'soldier', depth: s.x + s.y }); });
         GameState.elephants.forEach(el => { if(!GameState.isPaused) el.update(); renderQueue.push({ obj: el, type: 'elephant', depth: el.x + el.y }); });
@@ -1163,6 +1286,56 @@ function drawGame() {
         for (let i = GameState.floatingTexts.length - 1; i >= 0; i--) {
             let ft = GameState.floatingTexts[i]; ft.draw(ctx);
             if (ft.life <= 0) GameState.floatingTexts.splice(i, 1);
+        }
+
+        // --- TUTORIAL POINTER RENDER LOGIC ---
+        if (GameState.phase === 'combat' && GameState.level === 1 && !GameState.isPaused) {
+            
+            if (GameState.tutorialState === 'select_troop') {
+                let troops = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
+                let target = troops[0]; // Point at the first available troop
+                if (target) {
+                    let pos = isoToScreen(target.x, target.y);
+                    let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
+                    
+                    ctx.save();
+                    // Draw bouncing pointing hand
+                    ctx.font = "50px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("👇", pos.x, pos.y - 50 - bob);
+                    
+                    // Draw pulsing green ring
+                    let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10;
+                    ctx.beginPath();
+                    ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2);
+                    ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            } 
+            else if (GameState.tutorialState === 'command_attack' && GameState.selectedUnit) {
+                let targetEnemy = GameState.enemies[0]; // Point at the first available enemy
+                if (targetEnemy) {
+                    let pos = isoToScreen(targetEnemy.x, targetEnemy.y);
+                    let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
+                    
+                    ctx.save();
+                    // Draw bouncing pointing hand
+                    ctx.font = "50px Arial";
+                    ctx.textAlign = "center";
+                    ctx.fillText("👇", pos.x, pos.y - 50 - bob);
+                    
+                    // Draw pulsing red ring
+                    let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10;
+                    ctx.beginPath();
+                    ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2);
+                    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
         }
 
         ctx.restore();
