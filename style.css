@@ -111,8 +111,15 @@ canvas:active { cursor: grabbing; }
         transform: translateX(-50%) scale(0.75) !important;
         transform-origin: top center;
     }
+    /* Hide Royal Advisor on small landscape screens */
     #ai-guide-panel {
-        transform: scale(0.75);
-        transform-origin: top left;
+        display: none !important;
+    }
+}
+
+/* Also hide Royal Advisor generally on any mobile screen width */
+@media screen and (max-width: 900px) {
+    #ai-guide-panel {
+        display: none !important;
     }
 }
