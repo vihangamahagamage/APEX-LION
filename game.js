@@ -1438,3 +1438,20 @@ resizeCanvas();
 updateDOM();
 function gameLoop() { drawGame(); requestAnimationFrame(gameLoop); }
 gameLoop();
+
+// --- Landing page එකෙන් එද්දී Settings auto-open කරන කෝඩ් එක ---
+window.addEventListener('DOMContentLoaded', () => {
+    // URL එකේ අගට ?action=settings කියලා තියෙනවද බලනවා
+    const urlParams = new URLSearchParams(window.location.search);
+    const action = urlParams.get('action');
+
+    if (action === 'settings') {
+        // ගේම් එක ලෝඩ් වෙන්න පොඩි වෙලාවක් දීලා Settings Button එක Auto ඔබනවා
+        setTimeout(() => {
+            const settingsBtn = document.getElementById('btn-settings');
+            if (settingsBtn) {
+                settingsBtn.click(); 
+            }
+        }, 100);
+    }
+});
