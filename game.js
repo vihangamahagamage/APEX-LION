@@ -11,10 +11,10 @@ const imagePaths = {
     elephantPen: "Assets/elephantpen.png",
     stables: "Assets/stables.png",
     wall: "Assets/wall.svg",
-    paddyField: "Assets/paddyField.png", 
+    paddyField: "Assets/paddyfield.png", 
     tower: "Assets/tower.png",     
     villager: "Assets/villager.png", 
-    soldier: "Assets/Soldier.png",   
+    soldier: "Assets/soldier.png",   
     elephant: "Assets/elephant.png", 
     horse: "Assets/hourse.png",     
     enemy: "Assets/enemy.png"      
