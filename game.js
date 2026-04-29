@@ -1,4 +1,5 @@
 // --- 1. Image Path Configuration ---
+
 const imagePaths = {
     land1: "Assets/background.svg", 
     land2: "Assets/background2.png", 
@@ -28,6 +29,7 @@ const GRID_IMAGE_CONFIG = {
 };
 
 // --- Game State & Constants ---
+
 const GameState = {
     gold: 1000, rice: 500, mode: 'normal', selectedBuilding: null,
     buildings: [], villagers: [], soldiers: [], elephants: [], horses: [], enemies: [],   
@@ -47,6 +49,66 @@ const GameState = {
     tutorialState: 'inactive' 
 };
 
+// --- AUDIO SYSTEM ---
+
+// if adding new sounds, should post it here
+const sounds = {
+    bgm: new Audio('Assets/bgm.mp3'),
+    click: new Audio('Assets/click.mp3'),
+    build: new Audio('Assets/build.mp3'),
+    attack: new Audio('Assets/attack.mp3'),
+	elephant_roar: new Audio('Assets/elephant_roar.mp3')
+};
+
+sounds.bgm.loop = true;
+
+let isMuted = false;
+let bgmStarted = false;
+
+// අලුතින් දාපු Volume පාලනය කරන Variables
+let globalBGMVolume = 0.3;  // Music සද්දෙ (මුලින් 30%)
+let globalSFXVolume = 0.8;  // අනිත් සද්ද (මුලින් 80%)
+sounds.bgm.volume = globalBGMVolume;
+
+function playSound(key) {
+    if (isMuted || !sounds[key]) return;
+    
+    if (key !== 'bgm') {
+        let snd = sounds[key].cloneNode();
+        snd.volume = globalSFXVolume; // Slider එකේ ගාණට සද්දෙ හැදෙනවා
+        snd.play().catch(e => console.log("Audio blocked"));
+    } else {
+        sounds.bgm.volume = globalBGMVolume; 
+        sounds.bgm.play().catch(e => console.log("BGM blocked"));
+    }
+}
+
+// Mute Button 
+
+window.addEventListener('DOMContentLoaded', () => {
+    const btnMute = document.getElementById('btn-mute');
+    if (btnMute) {
+        btnMute.addEventListener('click', () => {
+            isMuted = !isMuted;
+            btnMute.innerText = isMuted ? '🔇' : '🔊';
+            
+            if (isMuted) {
+                sounds.bgm.pause();
+            } else {
+                sounds.bgm.play();
+                bgmStarted = true;
+            }
+        });
+    }
+});
+
+document.body.addEventListener('click', () => {
+    if (!bgmStarted && !isMuted) {
+        playSound('bgm');
+        bgmStarted = true;
+    }
+}, { once: true });
+
 const TILE_W = 64; const TILE_H = 32;  
 const MAP_COLS = 40; const MAP_ROWS = 40; const ROCK_HEIGHT = 150; 
 
@@ -63,7 +125,10 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const mouse = { x: 0, y: 0, gridX: -1, gridY: -1 };
 
+
 // --- FIXED CAMERA CLAMPING & CENTERING ---
+
+
 function updateZoomLimits() {
     if (!canvas) return;
     const mapW = (MAP_COLS + MAP_ROWS) * (TILE_W / 2) + 20; 
@@ -445,6 +510,9 @@ class CombatEntity {
             if (this.actionTimer <= 0) {
                 this.actionTimer = this.attackSpeed; nearest.hp -= this.damage;
                 GameState.floatingTexts.push(new FloatingText(nearest.x, nearest.y, `-${this.damage}`, '#FF0000'));
+				
+				playSound('attack');
+				
             }
             return true; 
         }
@@ -564,7 +632,14 @@ class Soldier extends CombatEntity {
 
 class Elephant extends CombatEntity {
     constructor(x, y) { super(x,y); this.speed = 0.02; this.hp = 300; this.maxHp = 300; this.damage = 40; this.attackRange = 1.5; this.attackSpeed = 60; }
-    update() { if (this.hp <= 0) return; if (!this.combatUpdate(GameState.enemies)) this.moveUpdate(); }
+    update() { if (this.hp <= 0) return; if (!this.combatUpdate(GameState.enemies)) this.moveUpdate();
+
+	if (Math.random() < 0.002) { 
+            playSound('elephant_roar');
+        }
+	
+	}
+	
     draw(ctx, sx, sy) {
         const bob = (!GameState.isPaused && this.isMoving) ? Math.abs(Math.sin(Date.now() * 0.005)) * 4 : 0;
         this.drawSelectionRing(ctx, sx, sy);
@@ -596,6 +671,8 @@ class Horse extends CombatEntity {
     }
 }
 
+// ------ Enemy
+
 class Enemy extends CombatEntity {
     constructor(x, y, hpMult) { super(x,y); this.speed = 0.015; this.hp = 40 * hpMult; this.maxHp = 40 * hpMult; this.damage = 10 * hpMult; this.attackRange = 1.2; this.attackSpeed = 50; }
     update() {
@@ -614,6 +691,8 @@ class Enemy extends CombatEntity {
                 if (this.actionTimer <= 0) {
                     this.actionTimer = this.attackSpeed; nearest.hp -= this.damage;
                     GameState.floatingTexts.push(new FloatingText(nearest.gridX || nearest.x, nearest.gridY || nearest.y, `-${this.damage}`, '#FF0000'));
+					
+					playSound('attack');
                 }
             } else {
                 this.isMoving = true;
@@ -975,35 +1054,66 @@ window.addEventListener('DOMContentLoaded', () => {
     const btnPause = document.getElementById('btn-pause');
     const btnFullscreen = document.getElementById('btn-fullscreen');
 
-    // Settings Modal
+   // Settings Modal
     if(btnSettings) {
         let settingsModal = document.createElement('div');
         settingsModal.id = 'settings-modal';
-        settingsModal.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:15px; padding:30px; text-align:center; z-index:10001; color:white; box-shadow:0 10px 30px rgba(0,0,0,0.9);";
+        settingsModal.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:15px; padding:30px; text-align:center; z-index:10001; color:white; box-shadow:0 10px 30px rgba(0,0,0,0.9); min-width: 320px;";
         
         settingsModal.innerHTML = `
             <h2 style="font-family:var(--font-heading); color:var(--gold-primary); margin-bottom:20px; font-size:24px;">⚙️ Game Settings</h2>
             
-            <div style="margin-bottom: 15px;">
-                <label style="font-size: 18px; margin-right: 10px; font-family:var(--font-body);">Select Land:</label>
-                <select id="land-select" style="padding: 8px 12px; font-size: 16px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 16px; font-family:var(--font-body); color: var(--gold-light);">Music Volume: <span id="bgm-vol-text">30%</span></label>
+                <input type="range" id="bgm-slider" min="0" max="100" value="30" style="width: 100%; cursor: pointer; margin-top: 5px; accent-color: var(--gold-primary);">
+            </div>
+
+            <div style="margin-bottom: 25px; text-align: left;">
+                <label style="font-size: 16px; font-family:var(--font-body); color: var(--gold-light);">Effects Volume: <span id="sfx-vol-text">80%</span></label>
+                <input type="range" id="sfx-slider" min="0" max="100" value="80" style="width: 100%; cursor: pointer; margin-top: 5px; accent-color: var(--gold-primary);">
+            </div>
+
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 16px; margin-right: 10px; font-family:var(--font-body);">Select Land:</label>
+                <select id="land-select" style="padding: 6px 10px; font-size: 14px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
                     <option value="land1" selected>Land 1</option>
                     <option value="land2">Land 2</option>
                     <option value="land3">Land 3</option>
                 </select>
             </div>
 
-            <div style="margin-bottom: 25px;">
-                <label style="font-size: 18px; margin-right: 10px; font-family:var(--font-body);">Difficulty:</label>
-                <select id="difficulty-select" style="padding: 8px 12px; font-size: 16px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
+            <div style="margin-bottom: 25px; text-align: left;">
+                <label style="font-size: 16px; margin-right: 10px; font-family:var(--font-body);">Difficulty:</label>
+                <select id="difficulty-select" style="padding: 6px 10px; font-size: 14px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
                     <option value="easy">Easy (Less Enemies, Less Rewards)</option>
                     <option value="normal" selected>Normal</option>
                     <option value="hard">Hard (More Enemies, More Rewards)</option>
                 </select>
             </div>
-            <button id="btn-close-settings" style="background: linear-gradient(180deg, #F9DF9F 0%, #D4AF37 50%, #AA7C11 100%); border: 1px solid #5a3a00; color: #fff; padding: 10px 30px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">Save & Close</button>
+            <button id="btn-close-settings" style="background: linear-gradient(180deg, #F9DF9F 0%, #D4AF37 50%, #AA7C11 100%); border: 1px solid #5a3a00; color: #000; padding: 10px 30px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">Save & Close</button>
         `;
         document.body.appendChild(settingsModal);
+
+        // Music Slider එක වෙනස් කරද්දි සද්දෙ වෙනස් වෙනවා
+        document.getElementById('bgm-slider').addEventListener('input', (e) => {
+            globalBGMVolume = e.target.value / 100;
+            document.getElementById('bgm-vol-text').innerText = e.target.value + '%';
+            sounds.bgm.volume = globalBGMVolume;
+            
+            // සද්දෙ 0ට වඩා වැඩිකරොත් ඉබේම Mute එක අයින් වෙනවා
+            if(globalBGMVolume > 0 && isMuted) {
+                isMuted = false;
+                let btnMute = document.getElementById('btn-mute');
+                if(btnMute) btnMute.innerText = '🔊';
+                sounds.bgm.play();
+            }
+        });
+
+        // Effect Slider එක වෙනස් කරද්දි අනිත් සද්ද වෙනස් වෙනවා
+        document.getElementById('sfx-slider').addEventListener('input', (e) => {
+            globalSFXVolume = e.target.value / 100;
+            document.getElementById('sfx-vol-text').innerText = e.target.value + '%';
+        });
 
         btnSettings.addEventListener('click', () => {
             settingsModal.style.display = settingsModal.style.display === 'none' ? 'block' : 'none';
@@ -1021,7 +1131,6 @@ window.addEventListener('DOMContentLoaded', () => {
             settingsModal.style.display = 'none';
         });
     }
-
     // Pause Overlay
     if(btnPause) {
         let pauseOverlay = document.createElement('div');
@@ -1125,6 +1234,11 @@ function cancelPlacement() {
 }
 
 document.body.addEventListener('click', (e) => {
+	
+	if (e.target.closest('button')) {
+        playSound('click'); 
+    }
+	
     if (e.target.closest('.build-btn')) {
         const btn = e.target.closest('.build-btn');
         if (btn.id === 'btn-cancel') { cancelPlacement(); return; }
@@ -1312,6 +1426,8 @@ canvas.addEventListener('click', (e) => {
         GameState.gold -= goldCost; GameState.rice -= riceCost; updateDOM();
         GameState.buildings.push(new Building(gx, gy, type));
         
+		playSound('build');
+		
         let spawnX = gx + size; let spawnY = gy + size;
         if (spawnX >= MAP_COLS) spawnX = gx - 1; if (spawnY >= MAP_ROWS) spawnY = gy - 1;
 
