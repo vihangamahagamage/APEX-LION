@@ -7,24 +7,24 @@ const imagePaths = {
     
     tree: "", 
     lotus: "",
-    palace: "Assets/casel.png", 
-    barracks: "Assets/barracks.png",
-    elephantPen: "Assets/elephantpen.png",
-    stables: "Assets/stables.png",
+    palace: "Assets/casel.svg", 
+    barracks: "Assets/barracks.svg",
+    elephantPen: "Assets/elephantpen.svg",
+    stables: "Assets/stables.svg",
     wall: "Assets/wall.svg",
-    paddyField: "Assets/paddyfield.png", 
-    tower: "Assets/tower.png",     
-    villager: "Assets/villager.png", 
-    soldier: "Assets/soldier.png",   
-    elephant: "Assets/elephant.png", 
-    horse: "Assets/hourse.png",     
-    enemy: "Assets/enemy.png"      
+    paddyField: "Assets/paddyfield.svg", 
+    tower: "Assets/tower.svg",     
+    villager: "Assets/villager.svg", 
+    soldier: "Assets/soldier.svg",   
+    elephant: "Assets/elephant.svg", 
+    horse: "Assets/hourse.svg",     
+    enemy: "Assets/enemy.svg"      
 };
 
 // --- එක එක Land එකට අදාල Size සහ Position වෙන වෙනම හදාගන්න තැන ---
 const GRID_IMAGE_CONFIG = {
-    land1: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 },
-    land2: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }, 
+    land1: { offsetX: -864, offsetY: 0, width: 1728, height: 1014 },
+    land2: { offsetX: -864, offsetY: 0, width: 1728, height: 1014 }, 
     land3: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }  
 };
 
@@ -110,7 +110,7 @@ document.body.addEventListener('click', () => {
 }, { once: true });
 
 const TILE_W = 64; const TILE_H = 32;  
-const MAP_COLS = 40; const MAP_ROWS = 40; const ROCK_HEIGHT = 150; 
+const MAP_COLS = 27; const MAP_ROWS = 27; const ROCK_HEIGHT = 150; 
 
 let camera = { x: 0, y: 0 }; 
 let zoom = 1.0; 
@@ -369,7 +369,7 @@ function drawBlockCenter(ctx, cx, cy, baseSize, size, h, topC, leftC, rightC, z)
 class Building {
     constructor(gridX, gridY, type) {
         this.gridX = gridX; this.gridY = gridY; this.type = type;
-        this.size = (type === 'Wall' || type === 'Tower') ? 1 : 2;
+        this.size = type === 'Wall' ? 1 : (type === 'Tower' ? 2 : 3)
         this.imgKey = type === 'Elephant Pen' ? 'elephantPen' : type === 'Paddy Field' ? 'paddyField' : type.toLowerCase();
         
         if(type === 'Wall') this.maxHp = 500;
@@ -398,12 +398,18 @@ class Building {
         }
     }
     
+	//can change the size of assets in places where they are available here
+	
     draw(ctx, screenX, screenY) {
         const img = images[this.imgKey];
         if (imagePaths[this.imgKey] && img && img.complete && img.naturalWidth > 0) {
-            const imgW = this.size * TILE_W; const imgH = imgW * (img.naturalHeight / img.naturalWidth);
+			
+			const imageScale = 1;
+			
+            const imgW = this.size * TILE_W * imageScale; 
+			const imgH = imgW * (img.naturalHeight / img.naturalWidth);
             const bottomY = screenY - TILE_H / 2 + this.size * TILE_H;
-            ctx.drawImage(img, screenX - imgW/2, bottomY - imgH, imgW, imgH);
+            ctx.drawImage(img, screenX - imgW / 2, bottomY - imgH + (this.size * TILE_H * (imageScale - 1) / 2), imgW, imgH);
         } else {
             ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
             if (this.type === 'Palace') {
@@ -1223,7 +1229,7 @@ function showMessage(msg, isError = false) {
 
 function setPlacementMode(type, goldCost, riceCost) {
     if (GameState.isPaused) return;
-    const size = (type === 'Wall' || type === 'Tower') ? 1 : 2;
+    const size = type === 'Wall' ? 1 : (type === 'Tower' ? 2 : 3);
     GameState.mode = 'placement_mode'; GameState.selectedBuilding = { type, goldCost, riceCost, size };
     const btnCancel = document.getElementById('btn-cancel');
     if(btnCancel) btnCancel.classList.remove('hidden'); 
@@ -1531,6 +1537,32 @@ function drawGame() {
             const pos = isoToScreen(item.type === 'building' ? item.obj.gridX : item.obj.x, item.type === 'building' ? item.obj.gridY : item.obj.y);
             item.obj.draw(ctx, pos.x, pos.y);
         });
+		
+		// --------(Building Preview) --------
+        if (GameState.mode === 'placement_mode' && mouse.gridX >= 0 && mouse.gridY >= 0) {
+            const { type, size } = GameState.selectedBuilding;
+            const bx = mouse.gridX; 
+            const by = mouse.gridY;
+            const pos = isoToScreen(bx, by);
+
+            ctx.save();
+            ctx.globalAlpha = 0.6; //(Preview)
+
+            // Choosing what's in the picture
+            let imgKey = type === 'Elephant Pen' ? 'elephantPen' : type === 'Paddy Field' ? 'paddyField' : type.toLowerCase();
+            let img = images[imgKey];
+
+            if (img && img.complete && img.naturalWidth > 0) {
+                const imageScale = 1; // Change the scale.
+                const imgW = size * TILE_W * imageScale;
+                const imgH = imgW * (img.naturalHeight / img.naturalWidth);
+                const bottomY = pos.y - TILE_H / 2 + size * TILE_H;
+
+                ctx.drawImage(img, pos.x - imgW / 2, bottomY - imgH + (size * TILE_H * (imageScale - 1) / 2), imgW, imgH);
+            }
+            ctx.restore();
+        }
+        // --------------------------------------------------------
 
         for (let i = GameState.floatingTexts.length - 1; i >= 0; i--) {
             let ft = GameState.floatingTexts[i]; ft.draw(ctx);
