@@ -2,7 +2,7 @@
 
 const imagePaths = {
     land1: "Assets/background.svg", 
-    land2: "Assets/background2.png", 
+    land2: "Assets/background2.svg", 
     land3: "", 
     
     tree: "", 
@@ -24,7 +24,7 @@ const imagePaths = {
 // --- එක එක Land එකට අදාල Size සහ Position වෙන වෙනම හදාගන්න තැන ---
 const GRID_IMAGE_CONFIG = {
     land1: { offsetX: -864, offsetY: -10, width: 1725, height: 1010 },
-    land2: { offsetX: -864, offsetY: 0, width: 1728, height: 1014 }, 
+    land2: { offsetX: -970, offsetY: -60, width: 1950, height: 1270 }, 
     land3: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }  
 };
 
@@ -57,7 +57,9 @@ const sounds = {
     click: new Audio('Assets/click.mp3'),
     build: new Audio('Assets/build.mp3'),
     attack: new Audio('Assets/attack.mp3'),
-	elephant_roar: new Audio('Assets/elephant_roar.mp3')
+	elephant_roar: new Audio('Assets/elephant_roar.mp3'),
+	wall_build: new Audio('Assets/wall.mp3'),
+	tower_build: new Audio('Assets/towerbuild.mp3')
 };
 
 sounds.bgm.loop = true;
@@ -1442,7 +1444,17 @@ canvas.addEventListener('click', (e) => {
         GameState.gold -= goldCost; GameState.rice -= riceCost; updateDOM();
         GameState.buildings.push(new Building(gx, gy, type));
         
-		playSound('build');
+        // --- Where each building plays a different sound ---
+        if (type === 'Wall') {
+            playSound('wall_build');
+        } else if (type === 'Tower') {
+            playSound('tower_build');
+        } else if (type === 'Palace') {
+            playSound('build'); 
+        } else {
+            playSound('build'); 
+        }
+        // --------------------------------------------------------
 		
         let spawnX = gx + size; let spawnY = gy + size;
         if (spawnX >= MAP_COLS) spawnX = gx - 1; if (spawnY >= MAP_ROWS) spawnY = gy - 1;
