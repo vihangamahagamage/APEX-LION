@@ -1,6 +1,6 @@
 # 👑 APEX-LION
 
-![Game Screenshot](Assets/logo.png) 
+![Game Screenshot](screenshots/prototype 2.png) 
 
 **APEX-LION** is a web-based isometric base-building and tower defense game. Defend your kingdom atop the legendary rock fortress by managing resources, constructing buildings, and commanding your troops against increasingly difficult enemy waves.
 
