@@ -1270,6 +1270,13 @@ window.addEventListener('DOMContentLoaded', () => {
                     <option value="hard">Hard (More Enemies, More Rewards)</option>
                 </select>
             </div>
+			
+			<div style="margin-bottom: 25px; text-align: center;">
+                <button id="btn-force-restart" style="background: linear-gradient(180deg, #8B0000 0%, #500000 100%); border: 1px solid #FF6347; color: #fff; padding: 8px 20px; border-radius: 6px; font-family: var(--font-heading); font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6);">
+                    ⚠️ RESTART GAME
+                </button>
+            </div>
+			
             <button id="btn-close-settings" style="background: linear-gradient(180deg, #F9DF9F 0%, #D4AF37 50%, #AA7C11 100%); border: 1px solid #5a3a00; color: #000; padding: 10px 30px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">Save & Close</button>
         `;
         document.body.appendChild(settingsModal);
@@ -1309,6 +1316,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('btn-close-settings').addEventListener('click', () => {
             settingsModal.style.display = 'none';
+        });
+		
+		// Settings ඇතුලේ තියෙන Restart Button එක එබුවම වෙන දේ
+        document.getElementById('btn-force-restart').addEventListener('click', () => {
+            // වැරදිලා එබුනොත් Save එක මැකෙන නිසා අහනවා ෂුවර් ද කියලා
+            let confirmRestart = confirm("Are you sure you want to restart? All your progress and current base will be lost!");
+            
+            if (confirmRestart) {
+				GameState.isRestarting = true;
+                localStorage.removeItem('apexLionSave'); // පරණ Save එක මකා දමනවා
+                location.reload(); // පේජ් එක රීලෝඩ් කරනවා (එතකොට අලුතින්ම පටන් ගනීවි)
+            }
         });
     }
     // Pause Overlay
@@ -1377,6 +1396,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(goPopup);
 
         document.getElementById('btn-restart-game').addEventListener('click', () => {
+            localStorage.removeItem('apexLionSave'); // පරණ Save එක මකා දමනවා
             location.reload(); 
         });
     }
@@ -1849,6 +1869,97 @@ function drawGame() {
 
 resizeCanvas(); 
 updateDOM();
+
+// ==========================================
+// --- GAME SAVE & LOAD SYSTEM ---
+// ==========================================
+
+function saveGame() {
+    // ගේම් ඕවර් වෙලා නම් Save කරන්නේ නෑ (නැත්තන් හැමදාම මැරිලා ඉඳීවි)
+    if (GameState.phase === 'game_over' || GameState.phase === 'game_over_delay' || GameState.isRestarting) return; 
+
+    const saveData = {
+        gold: GameState.gold, 
+        rice: GameState.rice, 
+        level: GameState.level,
+        phase: GameState.phase, 
+        timer: GameState.timer, 
+        palaceLevel: GameState.palaceLevel,
+        difficulty: GameState.difficulty, 
+        currentLand: GameState.currentLand,
+        buildings: GameState.buildings, 
+        villagers: GameState.villagers,
+        soldiers: GameState.soldiers, 
+        elephants: GameState.elephants,
+        horses: GameState.horses, 
+        enemies: GameState.enemies
+    };
+    
+    // Save data එක Text එකක් කරලා LocalStorage එකේ තියාගන්නවා
+    localStorage.setItem('apexLionSave', JSON.stringify(saveData));
+}
+
+function loadGame() {
+    const savedStr = localStorage.getItem('apexLionSave');
+    if (!savedStr) return; // Save එකක් නැත්නම් මුල ඉඳන් පටන් ගන්නවා
+    
+    try {
+        const saved = JSON.parse(savedStr);
+        
+        // සාමාන්‍ය දේවල් Load කිරීම
+        GameState.gold = saved.gold || 1000; 
+        GameState.rice = saved.rice || 500;
+        GameState.level = saved.level || 1; 
+        GameState.phase = saved.phase || 'build';
+        GameState.timer = saved.timer || 6300; 
+        GameState.palaceLevel = saved.palaceLevel || 1;
+        GameState.difficulty = saved.difficulty || 'normal'; 
+        GameState.currentLand = saved.currentLand || 'land1';
+
+        // Object විදිහට save උන දේවල් ආයෙත් Class වලට (Reconstruct) හරවනවා
+        GameState.buildings = (saved.buildings || []).map(b => {
+            let obj = new Building(b.gridX, b.gridY, b.type);
+            obj.hp = b.hp; obj.maxHp = b.maxHp; return obj;
+        });
+        GameState.villagers = (saved.villagers || []).map(v => {
+            let obj = new Villager(v.x, v.y); obj.hp = v.hp; obj.state = v.state; return obj;
+        });
+        GameState.soldiers = (saved.soldiers || []).map(s => {
+            let obj = new Soldier(s.x, s.y); obj.hp = s.hp; return obj;
+        });
+        GameState.elephants = (saved.elephants || []).map(e => {
+            let obj = new Elephant(e.x, e.y); obj.hp = e.hp; return obj;
+        });
+        GameState.horses = (saved.horses || []).map(h => {
+            let obj = new Horse(h.x, h.y); obj.hp = h.hp; return obj;
+        });
+        GameState.enemies = (saved.enemies || []).map(e => {
+            let obj = new Enemy(e.x, e.y, 1); obj.hp = e.hp; obj.maxHp = e.maxHp; return obj;
+        });
+
+        updateDOM();
+        console.log("Game Loaded Successfully!");
+    } catch (e) {
+        console.error("Save file corrupted. Starting new game.", e);
+    }
+}
+
+// Tab එක close කරද්දී හරි Refresh කරද්දී හරි Save කරන්න
+window.addEventListener('beforeunload', saveGame);
+
+// Mobile Phone එකේ වෙන App එකකට යද්දී (minimize කරද්දී) Save කරන්න
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') saveGame();
+});
+
+// තත්පර 10න් 10ට ඉබේම Auto-save වෙන්න
+setInterval(saveGame, 10000);
+
+// ගේම් එක මුලින්ම පටන් ගනිද්දී Save කරපු එකක් තියෙනවද බලලා ලෝඩ් කරන්න
+loadGame();
+
+// ==========================================
+
 function gameLoop() { drawGame(); requestAnimationFrame(gameLoop); }
 gameLoop();
 
