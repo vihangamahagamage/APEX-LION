@@ -1039,8 +1039,10 @@ function handleGameLogic() {
         } else {
             // --- GAME OVER CHECK ---
             if (GameState.phase !== 'game_over' && GameState.phase !== 'game_over_delay') {
-                let anyBuildingExists = GameState.buildings.length > 0;
-                if (!anyBuildingExists) {
+                // Wall එකක් නෙවෙයි නම් විතරක් Building එකක් විදිහට සලකන්න
+                let anyImportantBuildingExists = GameState.buildings.some(b => b.type !== 'Wall');
+                
+                if (!anyImportantBuildingExists) {
                     GameState.phase = 'game_over_delay';
                     
                     // --- HIGH SCORE LOGIC ---
