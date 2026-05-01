@@ -23,7 +23,7 @@ const imagePaths = {
 
 // --- එක එක Land එකට අදාල Size සහ Position වෙන වෙනම හදාගන්න තැන ---
 const GRID_IMAGE_CONFIG = {
-    land1: { offsetX: -864, offsetY: 0, width: 1728, height: 1014 },
+    land1: { offsetX: -864, offsetY: -10, width: 1725, height: 1010 },
     land2: { offsetX: -864, offsetY: 0, width: 1728, height: 1014 }, 
     land3: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }  
 };
@@ -404,12 +404,19 @@ class Building {
         const img = images[this.imgKey];
         if (imagePaths[this.imgKey] && img && img.complete && img.naturalWidth > 0) {
 			
-			const imageScale = 1;
-			
-            const imgW = this.size * TILE_W * imageScale; 
-			const imgH = imgW * (img.naturalHeight / img.naturalWidth);
+			let imageScale = 1.0;
+			let imgW = this.size * TILE_W * imageScale;
+			let imgH = imgW * (img.naturalHeight / img.naturalWidth);
+
+			if (this.type === 'Wall') {
+				imgW = 60; 
+				imgH = imgW * (img.naturalHeight / img.naturalWidth);
+			}
             const bottomY = screenY - TILE_H / 2 + this.size * TILE_H;
-            ctx.drawImage(img, screenX - imgW / 2, bottomY - imgH + (this.size * TILE_H * (imageScale - 1) / 2), imgW, imgH);
+			let finalY = bottomY - imgH; 
+
+            ctx.drawImage(img, screenX - imgW / 2, finalY, imgW, imgH);
+            
         } else {
             ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
             if (this.type === 'Palace') {
@@ -1446,7 +1453,11 @@ canvas.addEventListener('click', (e) => {
         else if (type === 'Elephant Pen') { for(let i=0; i<2; i++) GameState.elephants.push(new Elephant(spawnX, spawnY)); } 
         else if (type === 'Stables') { for(let i=0; i<3; i++) GameState.horses.push(new Horse(spawnX, spawnY)); } 
 
-        showMessage(`${type} constructed!`); cancelPlacement();
+        showMessage(`${type} constructed!`); 
+		// Wall එකක් නම් විතරක් placement එක කැන්සල් කරන්නේ නෑ, දිගටම තියන්න දෙනවා
+		if (type !== 'Wall') {
+			cancelPlacement(); 
+		}
     } else showMessage("Not enough resources!", true);
 });
 
@@ -1484,6 +1495,18 @@ function drawGame() {
 
         if (useImageGrid) {
             ctx.drawImage(gridImg, config.offsetX, config.offsetY, config.width, config.height);
+			
+			// --------(Faint Grid) --------
+            ctx.save();
+            for (let y = 0; y < MAP_ROWS; y++) {
+                for (let x = 0; x < MAP_COLS; x++) {
+                    const pos = isoToScreen(x, y);
+                    
+                    drawDiamond(ctx, pos.x, pos.y, 'rgba(0,0,0,0)', 'rgba(255, 255, 255, 0.2)');
+                }
+            }
+            ctx.restore();
+            // -------------------------------------------------------------------
             
             if (GameState.mode === 'placement_mode') { 
                 for (let y = 0; y < MAP_ROWS; y++) {
@@ -1553,12 +1576,19 @@ function drawGame() {
             let img = images[imgKey];
 
             if (img && img.complete && img.naturalWidth > 0) {
-                const imageScale = 1; // Change the scale.
-                const imgW = size * TILE_W * imageScale;
-                const imgH = imgW * (img.naturalHeight / img.naturalWidth);
+                let imageScale = 1.0;
+				let imgW = size * TILE_W * imageScale;
+				let imgH = imgW * (img.naturalHeight / img.naturalWidth);
+
+				if (type === 'Wall') {
+					imgW = 60; 
+					imgH = imgW * (img.naturalHeight / img.naturalWidth);
+				}
                 const bottomY = pos.y - TILE_H / 2 + size * TILE_H;
 
-                ctx.drawImage(img, pos.x - imgW / 2, bottomY - imgH + (size * TILE_H * (imageScale - 1) / 2), imgW, imgH);
+                let finalY = bottomY - imgH + (size * TILE_H * (imageScale - 1) / 2);
+
+                ctx.drawImage(img, pos.x - imgW / 2, finalY, imgW, imgH);
             }
             ctx.restore();
         }
