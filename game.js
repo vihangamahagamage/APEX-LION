@@ -286,22 +286,23 @@ function screenToIso(screenX, screenY) {
 }
 
 // --- Function that stops you from going near buildings ---
-function isBuildingBlocked(gx, gy) {
+function isBuildingBlocked(gx, gy, ignoreWalls = false) {
     if (gx < 0 || gx >= MAP_COLS || gy < 0 || gy >= MAP_ROWS) return true; 
     for (let b of GameState.buildings) {
-        if (b.type !== 'Paddy Field') { 
+        // ignoreWalls true නම්, Wall වල හැපෙන්නේ නැතුව යන්න දෙනවා
+        if (b.type !== 'Paddy Field' && !(ignoreWalls && b.type === 'Wall')) { 
             if (gx >= b.gridX && gx < b.gridX + b.size && gy >= b.gridY && gy < b.gridY + b.size) return true;
         }
     }
     return false;
 }
 
-function isTileBlocked(gx, gy, selfObj) {
+function isTileBlocked(gx, gy, selfObj, ignoreWalls = false) {
     try {
         if (gx < 0 || gx >= MAP_COLS || gy < 0 || gy >= MAP_ROWS) return true;
         const buildings = GameState.buildings || [];
         for (let b of buildings) {
-            if (b.type !== 'Paddy Field') {
+            if (b.type !== 'Paddy Field' && !(ignoreWalls && b.type === 'Wall')) {
                 if (gx >= b.gridX && gx < b.gridX + b.size && gy >= b.gridY && gy < b.gridY + b.size) return true;
             }
         }
@@ -534,7 +535,7 @@ class CombatEntity {
         return false; 
     }
 
-    moveUpdate() {
+    moveUpdate(ignoreWalls = false) {
         const dx = this.targetX - this.x; const dy = this.targetY - this.y; const dist = Math.hypot(dx, dy);
         if (dist < 0.1) {
             this.x = this.targetX; this.y = this.targetY; this.isMoving = false;
@@ -544,7 +545,8 @@ class CombatEntity {
                 const moves = [{dx:0,dy:1}, {dx:1,dy:0}, {dx:0,dy:-1}, {dx:-1,dy:0}];
                 const move = moves[Math.floor(Math.random() * moves.length)];
                 const nx = Math.floor(this.x) + move.dx; const ny = Math.floor(this.y) + move.dy;
-                if (!isTileBlocked(nx, ny, this) && !isBuildingBlocked(nx, ny)) { this.targetX = nx; this.targetY = ny; }
+                // මෙතනට ignoreWalls එකතු කළා
+                if (!isTileBlocked(nx, ny, this, ignoreWalls) && !isBuildingBlocked(nx, ny, ignoreWalls)) { this.targetX = nx; this.targetY = ny; }
             }
         } else { 
             this.isMoving = true;
@@ -553,10 +555,11 @@ class CombatEntity {
             let moveX = (dx / dist) * this.speed;
             let moveY = (dy / dist) * this.speed;
             
-            if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) {
+            // මෙතනටත් ignoreWalls එකතු කළා
+            if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y), ignoreWalls)) {
                 this.x += moveX;
             }
-            if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) {
+            if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY), ignoreWalls)) {
                 this.y += moveY;
             }
         }
@@ -629,19 +632,51 @@ class Villager extends CombatEntity {
 
 class Soldier extends CombatEntity {
     constructor(x, y) { super(x,y); this.speed = 0.035; this.hp = 50; this.maxHp = 50; this.damage = 10; this.attackRange = 1.2; this.attackSpeed = 40; }
-    update() { if (this.hp <= 0) return; if (!this.combatUpdate(GameState.enemies)) this.moveUpdate(); }
+    
+    update() { 
+        if (this.hp <= 0) return; 
+        // මෙතන true දාපු නිසා දැන් සෙබළුන්ට Wall එක අදාළ නෑ, ඒක පහුකරන් යන්න පුළුවන්
+        if (!this.combatUpdate(GameState.enemies)) this.moveUpdate(true); 
+    }
+    
     draw(ctx, sx, sy) {
         const bob = (!GameState.isPaused && this.isMoving) ? Math.abs(Math.sin(Date.now() * 0.012)) * 5 : 0;
-        this.drawSelectionRing(ctx, sx, sy);
-        ctx.save(); if(!this.facingRight) { ctx.translate(sx, sy); ctx.scale(-1, 1); ctx.translate(-sx, -sy); }
-        const img = images.soldier;
-        if (imagePaths.soldier && img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, sx - 16, sy - 38 - bob, 32, 48); } 
-        else {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.ellipse(sx, sy, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.fillStyle = '#C0C0C0'; ctx.fillRect(sx - 4, sy - 18 - bob, 8, 12); ctx.strokeRect(sx - 4, sy - 18 - bob, 8, 12);
-            ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(sx, sy - 22 - bob, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
+        
+        // --- Wall එක උඩින් පනින Animation එක ---
+        let isOnWall = false;
+        for(let b of GameState.buildings) {
+            if(b.type === 'Wall' && Math.floor(this.x) === b.gridX && Math.floor(this.y) === b.gridY) {
+                isOnWall = true; break;
+            }
         }
-        ctx.restore(); drawHealthBar(ctx, sx, sy - 30, this.hp, this.maxHp);
+        
+        let jumpOffset = 0;
+        if (isOnWall && this.isMoving) {
+            // කොටුව මැදින් යද්දී Math.sin පාවිච්චි කරලා ලස්සන Parabola (දුන්නක් වගේ) හැඩයකට පනිනවා
+            let arcX = Math.sin((this.x % 1) * Math.PI);
+            let arcY = Math.sin((this.y % 1) * Math.PI);
+            jumpOffset = Math.max(arcX, arcY) * 60; // 35px උඩට පනිනවා
+        }
+        
+        let finalY = sy - bob - jumpOffset; // සෙබළාගේ රූපය විතරක් උඩට යනවා
+        
+        this.drawSelectionRing(ctx, sx, sy); // Selection ring එක පොළොවේම තියෙනවා (sy)
+        
+        ctx.save(); if(!this.facingRight) { ctx.translate(sx, finalY); ctx.scale(-1, 1); ctx.translate(-sx, -finalY); }
+        const img = images.soldier;
+        
+        if (imagePaths.soldier && img && img.complete && img.naturalWidth > 0) { 
+            ctx.drawImage(img, sx - 16, finalY - 38, 32, 48); 
+        } 
+        else {
+            // පින්තූරේ ලෝඩ් වුණේ නැත්නම් පෙන්නන තැන
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.ellipse(sx, sy, 8, 4, 0, 0, Math.PI * 2); ctx.fill(); // හෙවනැල්ල පොළොවේ
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.fillStyle = '#C0C0C0'; ctx.fillRect(sx - 4, finalY - 18, 8, 12); ctx.strokeRect(sx - 4, finalY - 18, 8, 12);
+            ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(sx, finalY - 22, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
+        }
+        ctx.restore(); 
+        
+        drawHealthBar(ctx, sx, finalY - 30, this.hp, this.maxHp);
     }
 }
 
