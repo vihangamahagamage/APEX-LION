@@ -686,51 +686,176 @@ class Horse extends CombatEntity {
     }
 }
 
-// ------ Enemy
+// ------ Enemy & Pathfinding AI ------
+
+// සතුරන්ට පාර හොයාගන්න උදව් කරන A* Algorithm එක
+function findPathToTarget(startX, startY, target) {
+    let sx = Math.floor(startX), sy = Math.floor(startY);
+    let tx = target.gridX !== undefined ? target.gridX : Math.floor(target.x);
+    let ty = target.gridY !== undefined ? target.gridY : Math.floor(target.y);
+    
+    let open = [{x:sx, y:sy, g:0, f:0, p:null}];
+    let closed = new Set();
+    let dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}]; // උඩ, යට, වම, දකුණ
+    
+    let iters = 0;
+    while(open.length > 0 && iters < 400) {  // කෝඩ් එක හිරවෙන්නැති වෙන්න Limit එකක් තියෙනවා
+        iters++;
+        open.sort((a,b) => a.f - b.f);
+        let curr = open.shift();
+        let key = curr.x+','+curr.y;
+        
+        if(closed.has(key)) continue;
+        closed.add(key);
+
+        let tSize = target.size || 1;
+        // ඉලක්කයට ළඟා වුණාද කියලා බලනවා
+        if (curr.x >= tx - 1 && curr.x <= tx + tSize && curr.y >= ty - 1 && curr.y <= ty + tSize) {
+            let path = [];
+            let temp = curr;
+            while(temp.p) { path.push({x:temp.x, y:temp.y}); temp = temp.p; }
+            return path.reverse();
+        }
+
+        for(let d of dirs) {
+            let nx = curr.x + d.x, ny = curr.y + d.y;
+            if(nx>=0 && nx<MAP_COLS && ny>=0 && ny<MAP_ROWS) {
+                if(closed.has(nx+','+ny)) continue;
+                
+                let blocked = false;
+                for(let b of GameState.buildings) {
+                    if(b.type !== 'Paddy Field') {
+                        // ගොඩනැගිල්ලක් (Wall එකක් හරි) ඉස්සරහ තියෙනවද බලනවා (ඉලක්කය හැර)
+                        if(nx >= b.gridX && nx < b.gridX + b.size && ny >= b.gridY && ny < b.gridY + b.size) {
+                            if (b !== target) blocked = true;
+                        }
+                    }
+                }
+                
+                if(!blocked) {
+                    let g = curr.g + 1;
+                    let h = Math.abs(tx-nx) + Math.abs(ty-ny); // Manhattan දුර
+                    open.push({x:nx, y:ny, g:g, f:g+h, p:curr});
+                }
+            }
+        }
+    }
+    return null; // පාරක් හොයාගන්න බැරි වුණොත් (Wall වලින් වටකරලා නම්) null දෙනවා
+}
 
 class Enemy extends CombatEntity {
-    constructor(x, y, hpMult) { super(x,y); this.speed = 0.015; this.hp = 40 * hpMult; this.maxHp = 40 * hpMult; this.damage = 10 * hpMult; this.attackRange = 1.2; this.attackSpeed = 50; }
+    constructor(x, y, hpMult) { 
+        super(x,y); 
+        this.speed = 0.02; 
+        this.hp = 40 * hpMult; this.maxHp = 40 * hpMult; 
+        this.damage = 10 * hpMult; this.attackRange = 1.2; this.attackSpeed = 50; 
+        this.path = [];
+        this.pathTimer = Math.floor(Math.random() * 30); 
+        this.currentTarget = null;
+    }
+
     update() {
         if (this.hp <= 0) return;
         if (this.actionTimer > 0) this.actionTimer--;
 
+        // 1. ඉලක්ක වෙන් කරගැනීම (Wall එකක් නෙවෙයි නම් ඒක වැදගත් ඉලක්කයක්)
         let defenders = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
-        let targets = [...defenders, ...GameState.buildings];
-        let nearest = null; let minDist = 9999;
-        targets.forEach(t => { let d = getDistance(this, t); if (d < minDist) { minDist = d; nearest = t; } });
+        let importantTargets = [...defenders, ...GameState.buildings.filter(b => b.type !== 'Wall')];
+        let walls = GameState.buildings.filter(b => b.type === 'Wall');
 
-        if (nearest) {
-            let range = (nearest instanceof Building) ? nearest.size + 0.5 : this.attackRange;
-            if (minDist <= range) {
+        // ගේම් එකේ තියෙන්නේ Wall විතරක් නම්, Wall වලටම ගහන්න හදනවා
+        if (importantTargets.length === 0 && walls.length > 0) {
+            importantTargets = walls; 
+        }
+
+        // 2. තත්පරයකට සැරයක් පාර හොයනවා (Lag වෙන එක නවත්තන්න)
+        this.pathTimer--;
+        if (this.pathTimer <= 0 || !this.currentTarget || this.currentTarget.hp <= 0) {
+            this.pathTimer = 30; 
+            
+            let nearestImp = null; let minDistImp = 9999;
+            importantTargets.forEach(t => { 
+                let d = getDistance(this, t); 
+                if (d < minDistImp) { minDistImp = d; nearestImp = t; } 
+            });
+
+            if (nearestImp) {
+                // A* දාලා පාරක් තියෙනවද බලනවා
+                let newPath = findPathToTarget(this.x, this.y, nearestImp);
+                
+                if (newPath !== null) {
+                    // පාරක් (හිලක්) තියෙනවා! ඒක දිගේ යනවා.
+                    this.currentTarget = nearestImp;
+                    this.path = newPath;
+                } else {
+                    // පාරක් නෑ (Wall වලින් වහලා)! ළඟම තියෙන Wall එකට ගහන්න යනවා.
+                    let nearestWall = null; let minW = 9999;
+                    walls.forEach(w => {
+                        let d = getDistance(this, w);
+                        if (d < minW) { minW = d; nearestWall = w; }
+                    });
+                    
+                    if (nearestWall) {
+                        this.currentTarget = nearestWall;
+                        this.path = []; 
+                    } else {
+                        this.currentTarget = nearestImp; 
+                        this.path = [];
+                    }
+                }
+            } else {
+                 this.currentTarget = null;
+            }
+        }
+
+        // 3. ගමන් කිරීම සහ පහරදීම
+        if (this.currentTarget) {
+            let range = (this.currentTarget instanceof Building) ? this.currentTarget.size + 0.5 : this.attackRange;
+            let dToTarget = getDistance(this, this.currentTarget);
+
+            if (dToTarget <= range) {
                 this.isMoving = false;
+                this.facingRight = (this.currentTarget.gridX || this.currentTarget.x) > this.x;
                 if (this.actionTimer <= 0) {
-                    this.actionTimer = this.attackSpeed; nearest.hp -= this.damage;
-                    GameState.floatingTexts.push(new FloatingText(nearest.gridX || nearest.x, nearest.gridY || nearest.y, `-${this.damage}`, '#FF0000'));
-					
-					playSound('attack');
+                    this.actionTimer = this.attackSpeed; 
+                    this.currentTarget.hp -= this.damage;
+                    GameState.floatingTexts.push(new FloatingText(this.currentTarget.gridX || this.currentTarget.x, this.currentTarget.gridY || this.currentTarget.y, `-${this.damage}`, '#FF0000'));
+                    playSound('attack');
                 }
             } else {
                 this.isMoving = true;
-                const dx = (nearest.gridX || nearest.x) - this.x; const dy = (nearest.gridY || nearest.y) - this.y; const dist = Math.hypot(dx, dy);
-                this.facingRight = dx - dy > 0.01;
+                let tx, ty;
                 
-                let moveX = (dx / dist) * this.speed;
-                let moveY = (dy / dist) * this.speed;
-                if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
-                if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
+                if (this.path.length > 0) {
+                    // පාර දිගේ යනවා
+                    tx = this.path[0].x + 0.5; 
+                    ty = this.path[0].y + 0.5;
+                    let distToNode = Math.hypot(tx - this.x, ty - this.y);
+                    if (distToNode < 0.2) this.path.shift(); // ඊළඟ කොටුවට
+                } else {
+                    // කෙලින්ම ඉලක්කයට යනවා (Wall කඩන්න යද්දී)
+                    tx = (this.currentTarget.gridX !== undefined) ? this.currentTarget.gridX + this.currentTarget.size/2 : this.currentTarget.x;
+                    ty = (this.currentTarget.gridY !== undefined) ? this.currentTarget.gridY + this.currentTarget.size/2 : this.currentTarget.y;
+                }
+
+                let dx = tx - this.x; 
+                let dy = ty - this.y;
+                let dist = Math.hypot(dx, dy);
+                
+                if(dist > 0) {
+                    let moveX = (dx / dist) * this.speed;
+                    let moveY = (dy / dist) * this.speed;
+                    if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
+                    if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
+                    this.facingRight = dx - dy > 0.01;
+                }
             }
         } else {
-            this.isMoving = true;
-            const dx = 20 - this.x; const dy = 20 - this.y; const dist = Math.hypot(dx, dy);
-            if(dist > 0.5) { 
-                let moveX = (dx / dist) * this.speed; 
-                let moveY = (dy / dist) * this.speed;
-                if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
-                if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
-                this.facingRight = dx - dy > 0.01; 
-            }
+            // ඉලක්කයක් නැත්නම් නිකන් ඉන්නවා
+            this.isMoving = false;
         }
     }
+    
     draw(ctx, sx, sy) {
         const bob = (!GameState.isPaused && this.isMoving) ? Math.abs(Math.sin(Date.now() * 0.015)) * 6 : 0;
         ctx.save(); if(!this.facingRight) { ctx.translate(sx, sy); ctx.scale(-1, 1); ctx.translate(-sx, -sy); }
