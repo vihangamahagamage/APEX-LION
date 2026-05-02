@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>APEX-LION – The Legend of Hela Warriors</title>
     <link rel="icon" type="image/svg" href="Assets/logo.svg">
     
-    <!-- Fonts for both Landing Page & Game -->
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Game CSS -->
-    <link rel="stylesheet" href="style.css?v=6">
-	
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ============================================== -->
-    <!-- LANDING PAGE OVERLAY (සම්පූර්ණ ගේම් එකට උඩින් පේනවා) -->
-    <!-- ============================================== -->
+    <!-- LANDING PAGE OVERLAY -->
     <div id="landing-wrapper">
         <div class="scene"></div>
         <canvas id="grain"></canvas>
@@ -29,7 +25,7 @@
             <div class="subtitle">The Legend of Hela Warriors</div>
             <div class="divider"></div>
             
-            <div id="high-score-display" style="color: #FFD700; margin-top: 15px; font-family: 'Cinzel', serif; font-size: 18px; text-shadow: 0 2px 5px black; text-align: center;">
+            <div id="high-score-display" class="high-score-display">
                 🏆 Best Record: Level <span id="best-level-text">0</span>
             </div>
             
@@ -47,13 +43,10 @@
         </div>
     </div>
 
-
-    <!-- ============================================== -->
-    <!-- GAME UI & CANVAS (මේ ටික පිටිපස්සේ ලෝඩ් වෙනවා) -->
-    <!-- ============================================== -->
+    <!-- GAME UI & CANVAS -->
     <div id="loading-screen">
         <div class="loading-box">
-            <h1 style="font-family: 'Poppins', sans-serif; color: #D4AF37; margin-bottom: 20px;">Loading Assets...</h1>
+            <h1 class="loading-title">Loading Assets...</h1>
             <div class="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
@@ -78,7 +71,7 @@
                     <span id="gold-count" class="val">1000</span>
                 </div>
             </div>
-            <div class="divider-game" style="width:2px; height:30px; background:rgba(212,175,55,0.3); margin:0 10px;"></div>
+            <div class="divider-game divider-styled"></div>
             <div class="resource">
                 <span class="icon rice-icon">🌾</span>
                 <div class="res-col">
@@ -87,9 +80,7 @@
                 </div>
             </div>
         </div>
-        <div id="pan-btn" class="premium-panel">
-            🗺️ PAN MAP TO EXPLORE
-        </div>
+        <div id="pan-btn" class="premium-panel">🗺️ PAN MAP TO EXPLORE</div>
         <div id="system-message"></div>
     </div>
 
@@ -101,121 +92,91 @@
         <button id="btn-zoom-out" class="icon-btn premium-panel">➖</button>
     </div>
 
+    <!-- Level Status Container -->
+    <div id="level-status-container" class="level-status-container">
+        <div id="level-status-text" class="level-status-text"></div>
+        <button id="btn-early-wave" class="btn-early-wave"></button>
+    </div>
+
+    <!-- Royal Advisor Panel -->
+    <div id="ai-guide-panel" class="ai-guide-panel">
+        <div class="ai-header">
+            <span class="ai-icon">👑</span><br>
+            <span class="ai-title">ROYAL ADVISOR</span>
+            <hr class="ai-divider">
+        </div>
+        <div id="ai-chat-text" class="ai-chat-text"></div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <div id="bottom-dock-wrapper">
+        <button id="panel-toggle-btn" class="panel-toggle-btn">▼</button>
         <div id="ui-bottom" class="premium-panel"></div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- SCRIPTS -->
-    <!-- ============================================== -->
-    <script>
-        /* --- Landing Page Scripts (Grain Effect & Clicks) --- */
-        (function(){
-            const c = document.getElementById('grain');
-            if(!c) return;
-            const ctx = c.getContext('2d');
-            function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
-            resize(); window.addEventListener('resize', resize);
-            let frame = 0;
-            function drawGrain(){
-                const w = c.width, h = c.height; const img = ctx.createImageData(w, h); const d = img.data;
-                for(let i = 0; i < d.length; i += 4){
-                    const v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 28;
-                }
-                ctx.putImageData(img, 0, 0); frame++;
-                if(frame % 3 === 0) requestAnimationFrame(drawGrain); else requestAnimationFrame(drawGrain);
-            }
-            drawGrain();
-        })();
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal">
+        <h2 class="settings-title">⚙️ Game Settings</h2>
+        
+        <div class="settings-row">
+            <label class="settings-label">Music Volume: <span id="bgm-vol-text">30%</span></label>
+            <input type="range" id="bgm-slider" min="0" max="100" value="30" class="settings-slider">
+        </div>
 
-        document.querySelectorAll('.btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.style.transition = 'none'; btn.style.transform  = 'translateY(3px) scale(.97)';
-                setTimeout(() => { btn.style.transition = ''; btn.style.transform  = ''; }, 130);
-            });
-        });
+        <div class="settings-row">
+            <label class="settings-label">Effects Volume: <span id="sfx-vol-text">80%</span></label>
+            <input type="range" id="sfx-slider" min="0" max="100" value="80" class="settings-slider">
+        </div>
 
-        // --- Mobile Portrait Warning Logic ---
-        function checkPortraitWarning() {
-            let warning = document.getElementById('portrait-warning');
-            if (warning) {
-                // ෆෝන් එකක්ද සහ කෙලින් අතටද තියෙන්නේ කියලා බලනවා
-                if (window.innerHeight > window.innerWidth && /Mobi|Android/i.test(navigator.userAgent)) {
-                    warning.style.display = 'flex'; // මැසේජ් එක පෙන්නනවා
-                } else {
-                    warning.style.display = 'none'; // හරස් අතට හරවපු ගමන් මැසේජ් එක හංගනවා
-                }
-            }
-        }
+        <div class="settings-row">
+            <label class="settings-label settings-inline-label">Select Land:</label>
+            <select id="land-select" class="settings-select">
+                <option value="land1" selected>Land 1</option>
+                <option value="land2">Land 2</option>
+                <option value="land3">Land 3</option>
+            </select>
+        </div>
 
-        // ප්ලේයර් ෆෝන් එක හරවද්දි මේක ඉබේම චෙක් වෙනවා
-        window.addEventListener('resize', checkPortraitWarning);
+        <div class="settings-row">
+            <label class="settings-label settings-inline-label">Difficulty:</label>
+            <select id="difficulty-select" class="settings-select">
+                <option value="easy">Easy (Less Enemies, Less Rewards)</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard (More Enemies, More Rewards)</option>
+            </select>
+        </div>
+        
+        <div class="settings-center-row">
+            <button id="btn-force-restart" class="btn-force-restart">⚠️ RESTART GAME</button>
+        </div>
+        
+        <button id="btn-close-settings" class="btn-close-settings">Save & Close</button>
+    </div>
 
-        // 1. PLAY GAME එබුවම - Fullscreen & Auto-Rotate යන්න Try කරනවා!
-        document.getElementById('btn-play').addEventListener('click', () => {
-            let docEl = document.documentElement;
-            let requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-            
-            // Landing පිටුව ලස්සනට හංගනවා
-            const landingWrapper = document.getElementById('landing-wrapper');
-            landingWrapper.style.opacity = '0';
-            setTimeout(() => {
-                landingWrapper.style.display = 'none';
-            }, 500); 
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="pause-overlay">
+        <h1 class="pause-title">PAUSED</h1>
+        <button id="btn-resume-game" class="btn-resume-game">▶ RESUME</button>
+    </div>
 
-            if(requestFS) {
-                // Fullscreen එකට යනවා
-                requestFS.call(docEl).then(() => {
-                    // ගිය ගමන් ඉබේම ෆෝන් එක හරස් අතට (landscape) හරවලා lock කරන්න Try කරනවා
-                    if (screen.orientation && screen.orientation.lock) {
-                        screen.orientation.lock('landscape').catch(e => {
-                            console.log("Orientation lock failed:", e);
-                            checkPortraitWarning(); // ඉඩ දුන්නේ නැත්නම් Warning එක පෙන්නනවා
-                        });
-                    } else {
-                        checkPortraitWarning(); // Lock කරන්න බැරි බ්‍රවුසර් එකක් නම් Warning එක පෙන්නනවා
-                    }
-                }).catch(err => {
-                    console.log("FS Error", err);
-                    checkPortraitWarning(); // Fullscreen යන්න දුන්නෙත් නැත්නම් Warning එක පෙන්නනවා
-                });
-            } else {
-                checkPortraitWarning(); // Safari වගේ Fullscreen Support නැති එකක් නම් කෙලින්ම Warning එක පෙන්නනවා
-            }
-        });
+    <!-- Game Over Popup -->
+    <div id="game-over-popup" class="game-over-popup">
+        <h1 class="game-over-title">💀 GAME OVER 💀</h1>
+        <p class="game-over-desc">Your base has been destroyed!</p>
+        <p id="game-over-level-text" class="game-over-level-text"></p>
+        <button id="btn-restart-game" class="btn-restart-game">🔄 RESTART GAME</button>
+    </div>
 
-        // 2. SETTINGS එබුවම - ගේම් එකේ තියෙන Settings මෙනු එක ලෝඩ් කරනවා
-        document.getElementById('btn-open-settings').addEventListener('click', () => {
-            let docEl = document.documentElement;
-            let requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-            if(requestFS) requestFS.call(docEl).catch(err => console.log("FS Error", err));
+    <!-- Level Cleared Popup -->
+    <div id="level-popup" class="level-popup">
+        <h2 id="level-popup-title" class="level-popup-title"></h2>
+        <p class="level-popup-desc">You have successfully defended the kingdom!</p>
+        <p id="level-popup-reward" class="level-popup-reward"></p>
+        <p class="level-popup-footer">Starting next level automatically...</p>
+    </div>
 
-            const landingWrapper = document.getElementById('landing-wrapper');
-            landingWrapper.style.opacity = '0';
-            setTimeout(() => {
-                landingWrapper.style.display = 'none';
-                
-                // Trigger the Game's setting button directly
-                let gameSettingsBtn = document.getElementById('btn-settings');
-                if (gameSettingsBtn) gameSettingsBtn.click();
-            }, 500);
-        });
-
-        // 3. EXIT
-        document.getElementById('btn-exit').addEventListener('click', () => {
-            if(confirm("Are you sure you want to exit?")) { window.close(); }
-        });
-
-        // High Score
-        window.addEventListener('DOMContentLoaded', () => {
-            let savedScore = localStorage.getItem('apexLionHighScore');
-            document.getElementById('best-level-text').innerText = savedScore ? savedScore : '0';
-        });
-    </script>
-
-    <!-- Game Engine Logic -->
-    <script src="game.js?v=6"></script>
+    <!-- Game Scripts -->
+    <script src="game.js"></script>
 </body>
 </html>

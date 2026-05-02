@@ -1,10 +1,8 @@
 // --- 1. Image Path Configuration ---
-
 const imagePaths = {
     land1: "Assets/background.svg", 
     land2: "Assets/background2.svg", 
     land3: "", 
-    
     tree: "", 
     lotus: "",
     palace: "Assets/casel.svg", 
@@ -23,14 +21,11 @@ const imagePaths = {
     enemy: "Assets/enemy.svg"      
 };
 
-// --- එක එක Land එකට අදාල Size සහ Position වෙන වෙනම හදාගන්න තැන ---
 const GRID_IMAGE_CONFIG = {
     land1: { offsetX: -864, offsetY: -10, width: 1725, height: 1010 },
     land2: { offsetX: -970, offsetY: -60, width: 1950, height: 1270 }, 
     land3: { offsetX: -1280, offsetY: 0, width: 2560, height: 1430 }  
 };
-
-// --- Game State & Constants ---
 
 const GameState = {
     gold: 1000, rice: 500, mode: 'normal', selectedBuilding: null,
@@ -52,8 +47,6 @@ const GameState = {
 };
 
 // --- AUDIO SYSTEM ---
-
-// if adding new sounds, should post it here
 const sounds = {
     bgm: new Audio('Assets/bgm.mp3'),
     click: new Audio('Assets/click.mp3'),
@@ -68,18 +61,15 @@ sounds.bgm.loop = true;
 
 let isMuted = false;
 let bgmStarted = false;
-
-// අලුතින් දාපු Volume පාලනය කරන Variables
-let globalBGMVolume = 0.3;  // Music සද්දෙ (මුලින් 30%)
-let globalSFXVolume = 0.8;  // අනිත් සද්ද (මුලින් 80%)
+let globalBGMVolume = 0.3;  
+let globalSFXVolume = 0.8;  
 sounds.bgm.volume = globalBGMVolume;
 
 function playSound(key) {
     if (isMuted || !sounds[key]) return;
-    
     if (key !== 'bgm') {
         let snd = sounds[key].cloneNode();
-        snd.volume = globalSFXVolume; // Slider එකේ ගාණට සද්දෙ හැදෙනවා
+        snd.volume = globalSFXVolume; 
         snd.play().catch(e => console.log("Audio blocked"));
     } else {
         sounds.bgm.volume = globalBGMVolume; 
@@ -87,21 +77,14 @@ function playSound(key) {
     }
 }
 
-// Mute Button 
-
 window.addEventListener('DOMContentLoaded', () => {
     const btnMute = document.getElementById('btn-mute');
     if (btnMute) {
         btnMute.addEventListener('click', () => {
             isMuted = !isMuted;
             btnMute.innerText = isMuted ? '🔇' : '🔊';
-            
-            if (isMuted) {
-                sounds.bgm.pause();
-            } else {
-                sounds.bgm.play();
-                bgmStarted = true;
-            }
+            if (isMuted) { sounds.bgm.pause(); } 
+            else { sounds.bgm.play(); bgmStarted = true; }
         });
     }
 });
@@ -129,10 +112,6 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const mouse = { x: 0, y: 0, gridX: -1, gridY: -1 };
 
-
-// --- FIXED CAMERA CLAMPING & CENTERING ---
-
-
 function updateZoomLimits() {
     if (!canvas) return;
     const mapW = (MAP_COLS + MAP_ROWS) * (TILE_W / 2) + 20; 
@@ -147,25 +126,19 @@ function clampCamera() {
     const mapRight = (MAP_COLS * TILE_W / 2);
     const mapTop = -TILE_H * 2; 
     const mapBottom = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ROCK_HEIGHT;
-
     const pad = 10; 
     let minCamX = canvas.width - mapRight * zoom - pad;
     let maxCamX = -mapLeft * zoom + pad;
     let minCamY = canvas.height - mapBottom * zoom - pad;
     let maxCamY = -mapTop * zoom + pad;
 
-    if (minCamX > maxCamX) {
-        camera.x = canvas.width / 2;
-    } else {
-        camera.x = Math.max(minCamX, Math.min(camera.x, maxCamX));
-    }
+    if (minCamX > maxCamX) { camera.x = canvas.width / 2; } 
+    else { camera.x = Math.max(minCamX, Math.min(camera.x, maxCamX)); }
 
     if (minCamY > maxCamY) {
         let mapCenterY = (mapTop + mapBottom) / 2;
         camera.y = canvas.height / 2 - (mapCenterY * zoom);
-    } else {
-        camera.y = Math.max(minCamY, Math.min(camera.y, maxCamY));
-    }
+    } else { camera.y = Math.max(minCamY, Math.min(camera.y, maxCamY)); }
 }
 
 function centerCameraOnBase() {
@@ -195,13 +168,10 @@ function doZoom(amount, focusX = canvas.width/2, focusY = canvas.height/2) {
     updateZoomLimits(); 
     let oldZoom = zoom; 
     zoom += amount;
-    
     if (zoom > MAX_ZOOM) zoom = MAX_ZOOM; 
     if (zoom < MIN_ZOOM) zoom = MIN_ZOOM;
-    
     let isoX = (focusX - camera.x) / oldZoom; 
     let isoY = (focusY - camera.y) / oldZoom;
-    
     camera.x = focusX - isoX * zoom; 
     camera.y = focusY - isoY * zoom;
     clampCamera(); 
@@ -210,7 +180,6 @@ document.getElementById('btn-zoom-in')?.addEventListener('click', () => doZoom(0
 document.getElementById('btn-zoom-out')?.addEventListener('click', () => doZoom(-0.1));
 canvas.addEventListener('wheel', (e) => { if(e.deltaY < 0) doZoom(0.1, e.clientX, e.clientY); else doZoom(-0.1, e.clientX, e.clientY); });
 
-// --- SVG Assets & Image Loading ---
 const svgs = {
     palaceIcon: `data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="40" width="60" height="40" fill="%23DAA520" stroke="%23000" stroke-width="2"/><polygon points="20,40 50,10 80,40" fill="%23FFD700" stroke="%23000" stroke-width="2"/><rect x="40" y="60" width="20" height="20" fill="%234a3525"/></svg>`,
     barracksIcon: `data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="15" y="50" width="70" height="30" fill="%23B22222" stroke="%23000" stroke-width="2"/><polygon points="15,50 35,30 65,30 85,50" fill="%23CD5C5C" stroke="%23000" stroke-width="2"/><rect x="40" y="65" width="20" height="15" fill="%234a3525"/><rect x="50" y="40" width="10" height="10" fill="%23FFD700"/></svg>`,
@@ -231,8 +200,6 @@ function initImages() {
     
     imageKeys.forEach(key => {
         images[key] = new Image();
-        
-        // Progress is incremented when an image loads successfully or fails.
         images[key].onload = () => { assetLoaded(); };
         images[key].onerror = () => { assetLoaded(); }; 
 
@@ -249,7 +216,7 @@ function initImages() {
             if (svgs[svgKey] || svgs[key]) {
                 images[key].src = svgs[svgKey] || svgs[key];
             } else {
-                assetLoaded(); // If there is no picture, move on.
+                assetLoaded();
             }
         }
     });
@@ -265,7 +232,6 @@ function assetLoaded() {
     if (progressBar) progressBar.style.width = progress + '%';
     if (loadingText) loadingText.innerText = progress + '%';
 
-    // After reaching 100%, wait half a second and then remove the loading screen.
     if (loadedAssets >= totalAssets) {
         setTimeout(() => {
             const loadingScreen = document.getElementById('loading-screen');
@@ -287,11 +253,9 @@ function screenToIso(screenX, screenY) {
     return { x: (adjY / TILE_H) + (adjX / TILE_W), y: (adjY / TILE_H) - (adjX / TILE_W) };
 }
 
-// --- Function that stops you from going near buildings ---
 function isBuildingBlocked(gx, gy, ignoreWalls = false) {
     if (gx < 0 || gx >= MAP_COLS || gy < 0 || gy >= MAP_ROWS) return true; 
     for (let b of GameState.buildings) {
-        // ignoreWalls true නම්, Wall වල හැපෙන්නේ නැතුව යන්න දෙනවා
         if (b.type !== 'Paddy Field' && !(ignoreWalls && b.type === 'Wall')) { 
             if (gx >= b.gridX && gx < b.gridX + b.size && gy >= b.gridY && gy < b.gridY + b.size) return true;
         }
@@ -370,7 +334,6 @@ function drawBlockCenter(ctx, cx, cy, baseSize, size, h, topC, leftC, rightC, z)
     let offsetY = (baseSize - size) * (TILE_H / 2); drawIsoBlock(ctx, cx, cy + offsetY, size, size, h, topC, leftC, rightC, z);
 }
 
-// --- Classes ---
 class Building {
     constructor(gridX, gridY, type) {
         this.gridX = gridX; this.gridY = gridY; this.type = type;
@@ -403,21 +366,15 @@ class Building {
         }
     }
     
-	//can change the size of assets in places where they are available here
-	
     draw(ctx, screenX, screenY) {
         let currentImgKey = this.imgKey;
-		
-		// Palace එකේ Level එක අනුව පින්තූරය මාරු කිරීම
         if (this.type === 'Palace') {
             if (GameState.palaceLevel === 2) currentImgKey = 'palace2';
-            else if (GameState.palaceLevel >= 3) currentImgKey = 'palace3'; // Level 3 න් පස්සේ දිගටම මේක පේනවා
+            else if (GameState.palaceLevel >= 3) currentImgKey = 'palace3';
         }
 
         const img = images[currentImgKey];
-		
         if (imagePaths[this.imgKey] && img && img.complete && img.naturalWidth > 0) {
-			
 			let imageScale = 1.0;
 			let imgW = this.size * TILE_W * imageScale;
 			let imgH = imgW * (img.naturalHeight / img.naturalWidth);
@@ -428,9 +385,7 @@ class Building {
 			}
             const bottomY = screenY - TILE_H / 2 + this.size * TILE_H;
 			let finalY = bottomY - imgH; 
-
             ctx.drawImage(img, screenX - imgW / 2, finalY, imgW, imgH);
-            
         } else {
             ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
             if (this.type === 'Palace') {
@@ -479,7 +434,6 @@ class CombatEntity {
         this.x = x; this.y = y; 
         this.targetX = x; this.targetY = y;
         this.actionTimer = 0; this.facingRight = true; this.isMoving = false;
-        
         this.manualTargetEnemy = null; 
         this.manualTargetPos = null;
     }
@@ -537,9 +491,7 @@ class CombatEntity {
             if (this.actionTimer <= 0) {
                 this.actionTimer = this.attackSpeed; nearest.hp -= this.damage;
                 GameState.floatingTexts.push(new FloatingText(nearest.x, nearest.y, `-${this.damage}`, '#FF0000'));
-				
 				playSound('attack');
-				
             }
             return true; 
         }
@@ -556,23 +508,15 @@ class CombatEntity {
                 const moves = [{dx:0,dy:1}, {dx:1,dy:0}, {dx:0,dy:-1}, {dx:-1,dy:0}];
                 const move = moves[Math.floor(Math.random() * moves.length)];
                 const nx = Math.floor(this.x) + move.dx; const ny = Math.floor(this.y) + move.dy;
-                // මෙතනට ignoreWalls එකතු කළා
                 if (!isTileBlocked(nx, ny, this, ignoreWalls) && !isBuildingBlocked(nx, ny, ignoreWalls)) { this.targetX = nx; this.targetY = ny; }
             }
         } else { 
             this.isMoving = true;
             this.facingRight = dx - dy > 0.01;
-            
             let moveX = (dx / dist) * this.speed;
             let moveY = (dy / dist) * this.speed;
-            
-            // මෙතනටත් ignoreWalls එකතු කළා
-            if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y), ignoreWalls)) {
-                this.x += moveX;
-            }
-            if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY), ignoreWalls)) {
-                this.y += moveY;
-            }
+            if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y), ignoreWalls)) { this.x += moveX; }
+            if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY), ignoreWalls)) { this.y += moveY; }
         }
     }
 }
@@ -619,9 +563,7 @@ class Villager extends CombatEntity {
                 this.isMoving = true; 
                 this.facingRight = dx - dy > 0.01; 
             }
-        } else {
-            this.moveUpdate(); 
-        }
+        } else { this.moveUpdate(); }
     }
     draw(ctx, sx, sy) {
         const bob = (!GameState.isPaused && this.isMoving) ? Math.abs(Math.sin(Date.now() * 0.01)) * 6 : 0;
@@ -629,9 +571,8 @@ class Villager extends CombatEntity {
         this.drawSelectionRing(ctx, sx, sy);
         ctx.save(); if(!this.facingRight) { ctx.translate(sx, sy); ctx.scale(-1, 1); ctx.translate(-sx, -sy); }
         const img = images.villager;
-        if (imagePaths.villager && img && img.complete && img.naturalWidth > 0) {
-            ctx.drawImage(img, sx - 16, rY - 38, 32, 48);
-        } else {
+        if (imagePaths.villager && img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, sx - 16, rY - 38, 32, 48); } 
+        else {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.ellipse(sx, sy, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
             ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.fillStyle = this.color;
             ctx.fillRect(sx - 4, rY - 18, 8, 12); ctx.strokeRect(sx - 4, rY - 18, 8, 12);
@@ -643,64 +584,39 @@ class Villager extends CombatEntity {
 
 class Soldier extends CombatEntity {
     constructor(x, y) { super(x,y); this.speed = 0.035; this.hp = 50; this.maxHp = 50; this.damage = 10; this.attackRange = 1.2; this.attackSpeed = 40; }
-    
-    update() { 
-        if (this.hp <= 0) return; 
-        // මෙතන true දාපු නිසා දැන් සෙබළුන්ට Wall එක අදාළ නෑ, ඒක පහුකරන් යන්න පුළුවන්
-        if (!this.combatUpdate(GameState.enemies)) this.moveUpdate(true); 
-    }
-    
+    update() { if (this.hp <= 0) return; if (!this.combatUpdate(GameState.enemies)) this.moveUpdate(true); }
     draw(ctx, sx, sy) {
         const bob = (!GameState.isPaused && this.isMoving) ? Math.abs(Math.sin(Date.now() * 0.012)) * 5 : 0;
-        
-        // --- Wall එක උඩින් පනින Animation එක ---
         let isOnWall = false;
         for(let b of GameState.buildings) {
-            if(b.type === 'Wall' && Math.floor(this.x) === b.gridX && Math.floor(this.y) === b.gridY) {
-                isOnWall = true; break;
-            }
+            if(b.type === 'Wall' && Math.floor(this.x) === b.gridX && Math.floor(this.y) === b.gridY) { isOnWall = true; break; }
         }
-        
         let jumpOffset = 0;
         if (isOnWall && this.isMoving) {
-            // කොටුව මැදින් යද්දී Math.sin පාවිච්චි කරලා ලස්සන Parabola (දුන්නක් වගේ) හැඩයකට පනිනවා
-            let arcX = Math.sin((this.x % 1) * Math.PI);
-            let arcY = Math.sin((this.y % 1) * Math.PI);
-            jumpOffset = Math.max(arcX, arcY) * 60; // 35px උඩට පනිනවා
+            let arcX = Math.sin((this.x % 1) * Math.PI); let arcY = Math.sin((this.y % 1) * Math.PI);
+            jumpOffset = Math.max(arcX, arcY) * 60; 
         }
-        
-        let finalY = sy - bob - jumpOffset; // සෙබළාගේ රූපය විතරක් උඩට යනවා
-        
-        this.drawSelectionRing(ctx, sx, sy); // Selection ring එක පොළොවේම තියෙනවා (sy)
-        
+        let finalY = sy - bob - jumpOffset; 
+        this.drawSelectionRing(ctx, sx, sy); 
         ctx.save(); if(!this.facingRight) { ctx.translate(sx, finalY); ctx.scale(-1, 1); ctx.translate(-sx, -finalY); }
         const img = images.soldier;
-        
-        if (imagePaths.soldier && img && img.complete && img.naturalWidth > 0) { 
-            ctx.drawImage(img, sx - 16, finalY - 38, 32, 48); 
-        } 
+        if (imagePaths.soldier && img && img.complete && img.naturalWidth > 0) { ctx.drawImage(img, sx - 16, finalY - 38, 32, 48); } 
         else {
-            // පින්තූරේ ලෝඩ් වුණේ නැත්නම් පෙන්නන තැන
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.ellipse(sx, sy, 8, 4, 0, 0, Math.PI * 2); ctx.fill(); // හෙවනැල්ල පොළොවේ
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.beginPath(); ctx.ellipse(sx, sy, 8, 4, 0, 0, Math.PI * 2); ctx.fill(); 
             ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.fillStyle = '#C0C0C0'; ctx.fillRect(sx - 4, finalY - 18, 8, 12); ctx.strokeRect(sx - 4, finalY - 18, 8, 12);
             ctx.fillStyle = '#FF0000'; ctx.beginPath(); ctx.arc(sx, finalY - 22, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); 
         }
-        ctx.restore(); 
-        
-        drawHealthBar(ctx, sx, finalY - 30, this.hp, this.maxHp);
+        ctx.restore(); drawHealthBar(ctx, sx, finalY - 30, this.hp, this.maxHp);
     }
 }
 
 class Elephant extends CombatEntity {
     constructor(x, y) { super(x,y); this.speed = 0.02; this.hp = 300; this.maxHp = 300; this.damage = 40; this.attackRange = 1.5; this.attackSpeed = 60; }
-    update() { if (this.hp <= 0) return; if (!this.combatUpdate(GameState.enemies)) this.moveUpdate();
-
-	if (Math.random() < 0.002) { 
-            playSound('elephant_roar');
-        }
-	
+    update() { 
+        if (this.hp <= 0) return; 
+        if (!this.combatUpdate(GameState.enemies)) this.moveUpdate();
+        if (Math.random() < 0.002) playSound('elephant_roar');
 	}
-	
     draw(ctx, sx, sy) {
         const bob = (!GameState.isPaused && this.isMoving) ? Math.abs(Math.sin(Date.now() * 0.005)) * 4 : 0;
         this.drawSelectionRing(ctx, sx, sy);
@@ -732,9 +648,6 @@ class Horse extends CombatEntity {
     }
 }
 
-// ------ Enemy & Pathfinding AI ------
-
-// සතුරන්ට පාර හොයාගන්න උදව් කරන A* Algorithm එක
 function findPathToTarget(startX, startY, target) {
     let sx = Math.floor(startX), sy = Math.floor(startY);
     let tx = target.gridX !== undefined ? target.gridX : Math.floor(target.x);
@@ -742,10 +655,10 @@ function findPathToTarget(startX, startY, target) {
     
     let open = [{x:sx, y:sy, g:0, f:0, p:null}];
     let closed = new Set();
-    let dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}]; // උඩ, යට, වම, දකුණ
+    let dirs = [{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}];
     
     let iters = 0;
-    while(open.length > 0 && iters < 400) {  // කෝඩ් එක හිරවෙන්නැති වෙන්න Limit එකක් තියෙනවා
+    while(open.length > 0 && iters < 400) {  
         iters++;
         open.sort((a,b) => a.f - b.f);
         let curr = open.shift();
@@ -755,10 +668,8 @@ function findPathToTarget(startX, startY, target) {
         closed.add(key);
 
         let tSize = target.size || 1;
-        // ඉලක්කයට ළඟා වුණාද කියලා බලනවා
         if (curr.x >= tx - 1 && curr.x <= tx + tSize && curr.y >= ty - 1 && curr.y <= ty + tSize) {
-            let path = [];
-            let temp = curr;
+            let path = []; let temp = curr;
             while(temp.p) { path.push({x:temp.x, y:temp.y}); temp = temp.p; }
             return path.reverse();
         }
@@ -767,26 +678,22 @@ function findPathToTarget(startX, startY, target) {
             let nx = curr.x + d.x, ny = curr.y + d.y;
             if(nx>=0 && nx<MAP_COLS && ny>=0 && ny<MAP_ROWS) {
                 if(closed.has(nx+','+ny)) continue;
-                
                 let blocked = false;
                 for(let b of GameState.buildings) {
                     if(b.type !== 'Paddy Field') {
-                        // ගොඩනැගිල්ලක් (Wall එකක් හරි) ඉස්සරහ තියෙනවද බලනවා (ඉලක්කය හැර)
                         if(nx >= b.gridX && nx < b.gridX + b.size && ny >= b.gridY && ny < b.gridY + b.size) {
                             if (b !== target) blocked = true;
                         }
                     }
                 }
-                
                 if(!blocked) {
-                    let g = curr.g + 1;
-                    let h = Math.abs(tx-nx) + Math.abs(ty-ny); // Manhattan දුර
+                    let g = curr.g + 1; let h = Math.abs(tx-nx) + Math.abs(ty-ny); 
                     open.push({x:nx, y:ny, g:g, f:g+h, p:curr});
                 }
             }
         }
     }
-    return null; // පාරක් හොයාගන්න බැරි වුණොත් (Wall වලින් වටකරලා නම්) null දෙනවා
+    return null; 
 }
 
 class Enemy extends CombatEntity {
@@ -804,21 +711,15 @@ class Enemy extends CombatEntity {
         if (this.hp <= 0) return;
         if (this.actionTimer > 0) this.actionTimer--;
 
-        // 1. ඉලක්ක වෙන් කරගැනීම (Wall එකක් නෙවෙයි නම් ඒක වැදගත් ඉලක්කයක්)
         let defenders = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
         let importantTargets = [...defenders, ...GameState.buildings.filter(b => b.type !== 'Wall')];
         let walls = GameState.buildings.filter(b => b.type === 'Wall');
 
-        // ගේම් එකේ තියෙන්නේ Wall විතරක් නම්, Wall වලටම ගහන්න හදනවා
-        if (importantTargets.length === 0 && walls.length > 0) {
-            importantTargets = walls; 
-        }
+        if (importantTargets.length === 0 && walls.length > 0) { importantTargets = walls; }
 
-        // 2. තත්පරයකට සැරයක් පාර හොයනවා (Lag වෙන එක නවත්තන්න)
         this.pathTimer--;
         if (this.pathTimer <= 0 || !this.currentTarget || this.currentTarget.hp <= 0) {
             this.pathTimer = 30; 
-            
             let nearestImp = null; let minDistImp = 9999;
             importantTargets.forEach(t => { 
                 let d = getDistance(this, t); 
@@ -826,35 +727,21 @@ class Enemy extends CombatEntity {
             });
 
             if (nearestImp) {
-                // A* දාලා පාරක් තියෙනවද බලනවා
                 let newPath = findPathToTarget(this.x, this.y, nearestImp);
-                
                 if (newPath !== null) {
-                    // පාරක් (හිලක්) තියෙනවා! ඒක දිගේ යනවා.
-                    this.currentTarget = nearestImp;
-                    this.path = newPath;
+                    this.currentTarget = nearestImp; this.path = newPath;
                 } else {
-                    // පාරක් නෑ (Wall වලින් වහලා)! ළඟම තියෙන Wall එකට ගහන්න යනවා.
                     let nearestWall = null; let minW = 9999;
                     walls.forEach(w => {
                         let d = getDistance(this, w);
                         if (d < minW) { minW = d; nearestWall = w; }
                     });
-                    
-                    if (nearestWall) {
-                        this.currentTarget = nearestWall;
-                        this.path = []; 
-                    } else {
-                        this.currentTarget = nearestImp; 
-                        this.path = [];
-                    }
+                    if (nearestWall) { this.currentTarget = nearestWall; this.path = []; } 
+                    else { this.currentTarget = nearestImp; this.path = []; }
                 }
-            } else {
-                 this.currentTarget = null;
-            }
+            } else { this.currentTarget = null; }
         }
 
-        // 3. ගමන් කිරීම සහ පහරදීම
         if (this.currentTarget) {
             let range = (this.currentTarget instanceof Building) ? this.currentTarget.size + 0.5 : this.attackRange;
             let dToTarget = getDistance(this, this.currentTarget);
@@ -873,33 +760,23 @@ class Enemy extends CombatEntity {
                 let tx, ty;
                 
                 if (this.path.length > 0) {
-                    // පාර දිගේ යනවා
-                    tx = this.path[0].x + 0.5; 
-                    ty = this.path[0].y + 0.5;
+                    tx = this.path[0].x + 0.5; ty = this.path[0].y + 0.5;
                     let distToNode = Math.hypot(tx - this.x, ty - this.y);
-                    if (distToNode < 0.2) this.path.shift(); // ඊළඟ කොටුවට
+                    if (distToNode < 0.2) this.path.shift(); 
                 } else {
-                    // කෙලින්ම ඉලක්කයට යනවා (Wall කඩන්න යද්දී)
                     tx = (this.currentTarget.gridX !== undefined) ? this.currentTarget.gridX + this.currentTarget.size/2 : this.currentTarget.x;
                     ty = (this.currentTarget.gridY !== undefined) ? this.currentTarget.gridY + this.currentTarget.size/2 : this.currentTarget.y;
                 }
 
-                let dx = tx - this.x; 
-                let dy = ty - this.y;
-                let dist = Math.hypot(dx, dy);
-                
+                let dx = tx - this.x; let dy = ty - this.y; let dist = Math.hypot(dx, dy);
                 if(dist > 0) {
-                    let moveX = (dx / dist) * this.speed;
-                    let moveY = (dy / dist) * this.speed;
+                    let moveX = (dx / dist) * this.speed; let moveY = (dy / dist) * this.speed;
                     if (!isBuildingBlocked(Math.floor(this.x + moveX), Math.floor(this.y))) this.x += moveX;
                     if (!isBuildingBlocked(Math.floor(this.x), Math.floor(this.y + moveY))) this.y += moveY;
                     this.facingRight = dx - dy > 0.01;
                 }
             }
-        } else {
-            // ඉලක්කයක් නැත්නම් නිකන් ඉන්නවා
-            this.isMoving = false;
-        }
+        } else { this.isMoving = false; }
     }
     
     draw(ctx, sx, sy) {
@@ -921,22 +798,7 @@ function showRoyalAdvisor(messages) {
     advisorTimeouts = [];
 
     let aiPanel = document.getElementById('ai-guide-panel');
-    if (!aiPanel) {
-        aiPanel = document.createElement('div');
-        aiPanel.id = 'ai-guide-panel';
-        aiPanel.style.cssText = "position:absolute; top:200px; left:15px; width:280px; background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:8px; padding:20px; color:var(--text-main); font-family:var(--font-body); z-index:20; box-shadow:0 8px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(212,175,55,0.1); pointer-events:none; transition: opacity 0.5s ease;";
-        
-        const aiHeader = document.createElement('div');
-        aiHeader.innerHTML = '<div style="text-align:center; width:100%;"><span style="font-size:24px;">👑</span><br><span style="font-family:var(--font-heading); font-weight:700; color:var(--gold-primary); letter-spacing:1px; font-size:16px;">ROYAL ADVISOR</span><hr style="border:0; height:1px; background: linear-gradient(to right, transparent, var(--gold-primary), transparent); margin:12px 0;"></div>';
-        
-        const aiText = document.createElement('div');
-        aiText.id = 'ai-chat-text';
-        aiText.style.cssText = "font-size:13px; line-height:1.6; font-weight:400; min-height:60px;";
-        
-        aiPanel.appendChild(aiHeader);
-        aiPanel.appendChild(aiText);
-        document.body.appendChild(aiPanel);
-    }
+    if (!aiPanel) return;
 
     aiPanel.style.opacity = '1';
     let aiText = document.getElementById('ai-chat-text');
@@ -968,7 +830,7 @@ function showRoyalAdvisor(messages) {
                 advisorTimeouts.push(t2);
             }
         } else {
-             aiText.innerHTML += '<span style="color:var(--gold-primary); font-family:var(--font-heading); font-weight:700;">Good Luck! ⚔️</span>';
+             aiText.innerHTML += '<span class="advisor-goodluck">Good Luck! ⚔️</span>';
              let t3 = setTimeout(() => {
                  aiPanel.style.opacity = '0';
              }, 6000);
@@ -998,23 +860,17 @@ function handleGameLogic() {
     if (GameState.phase === 'build') {
         GameState.timer--;
         if (GameState.timer <= 0) {
-            GameState.phase = 'combat';
-            GameState.enemiesSpawned = false;
-            GameState.combatFrameCount = 0; 
+            GameState.phase = 'combat'; GameState.enemiesSpawned = false; GameState.combatFrameCount = 0; 
         }
     } 
     else if (GameState.phase === 'combat') {
         GameState.combatFrameCount++; 
 
-        // --- TUTORIAL / ADVICE TRIGGER ---
         if (GameState.level === 1 && GameState.combatFrameCount === 180 && !GameState.midCombatAdviceGiven) {
             GameState.midCombatAdviceGiven = true;
-            
-            // Check if player has any combat troops
             let combatUnits = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses];
             
             if (combatUnits.length > 0 && GameState.tutorialState === 'inactive') {
-                // START TUTORIAL
                 GameState.tutorialState = 'select_troop';
                 showRoyalAdvisor([
                     "Your Majesty, the enemies are here!",
@@ -1022,7 +878,6 @@ function handleGameLogic() {
                     "First, CLICK on one of your Soldiers to select them."
                 ]);
             } else {
-                // Normal Advice
                 let combatAdvice = [];
                 if (GameState.gold >= 150) {
                     combatAdvice.push("Your Majesty, the enemy attacks! You have ample Gold.");
@@ -1048,39 +903,27 @@ function handleGameLogic() {
             }
             GameState.enemiesSpawned = true;
         } else {
-            // --- GAME OVER CHECK ---
             if (GameState.phase !== 'game_over' && GameState.phase !== 'game_over_delay') {
-                // Wall එකක් නෙවෙයි නම් විතරක් Building එකක් විදිහට සලකන්න
                 let anyImportantBuildingExists = GameState.buildings.some(b => b.type !== 'Wall');
-                
                 if (!anyImportantBuildingExists) {
                     GameState.phase = 'game_over_delay';
-                    
-                    // --- HIGH SCORE LOGIC ---
-                    // Take the previously saved one (or take 1).
                     let bestScore = parseInt(localStorage.getItem('apexLionHighScore')) || 1;
                     let isNewRecord = false;
                     
-                    // If the current level is higher than the previous one, it will be saved.
                     if (GameState.level > bestScore) {
                         localStorage.setItem('apexLionHighScore', GameState.level);
-                        bestScore = GameState.level;
-                        isNewRecord = true;
+                        bestScore = GameState.level; isNewRecord = true;
                     }
-                    // ---------------------------------
                     
                     setTimeout(() => {
-                        GameState.phase = 'game_over';
-                        GameState.isPaused = true; 
-                        
+                        GameState.phase = 'game_over'; GameState.isPaused = true; 
                         let goPopup = document.getElementById('game-over-popup');
                         if(goPopup) {
                             let lvlText = document.getElementById('game-over-level-text');
                             if(lvlText) {
-                                // Game Over Popup desplay a new record
                                 lvlText.innerHTML = `You survived until Level ${GameState.level}.<br><br>
-                                <span style="color: #FFD700; font-weight: bold; font-size: 22px;">🏆 Best Record: Level ${bestScore}</span>
-                                ${isNewRecord ? '<br><span style="color: #00FA9A; font-size: 16px; font-weight: bold; display: block; margin-top: 10px;">🎉 NEW HIGH SCORE! 🎉</span>' : ''}`;
+                                <span class="go-best-record">🏆 Best Record: Level ${bestScore}</span>
+                                ${isNewRecord ? '<br><span class="go-new-high">🎉 NEW HIGH SCORE! 🎉</span>' : ''}`;
                             }
                             goPopup.style.display = 'block';
                         }
@@ -1090,27 +933,17 @@ function handleGameLogic() {
             }
 
             if (GameState.enemies.length === 0 && GameState.phase !== 'game_over_delay' && GameState.phase !== 'game_over') {
-                
                 let rewardMult = GameState.difficulty === 'hard' ? 1.5 : (GameState.difficulty === 'easy' ? 0.5 : 1);
-                
                 let goldBonus = Math.floor(GameState.level * 150 * rewardMult);
                 let riceBonus = Math.floor(GameState.level * 50 * rewardMult);
                 
-                GameState.gold += goldBonus;
-                GameState.rice += riceBonus;
-                updateDOM();
-                
-                GameState.phase = 'level_cleared';
-                GameState.popupTimer = 180; 
+                GameState.gold += goldBonus; GameState.rice += riceBonus; updateDOM();
+                GameState.phase = 'level_cleared'; GameState.popupTimer = 180; 
 
                 let popup = document.getElementById('level-popup');
                 if(popup) {
-                    popup.innerHTML = `
-                        <h2 style="font-family:var(--font-heading); color:var(--gold-primary); margin:0 0 10px 0; font-size:28px;">🎉 Level ${GameState.level} Cleared! 🎉</h2>
-                        <p style="margin:5px 0; font-size:18px;">You have successfully defended the kingdom!</p>
-                        <p style="margin:15px 0; font-size:20px; font-weight:bold;">Reward: +${goldBonus} 🪙 | +${riceBonus} 🌾</p>
-                        <p style="margin:0; font-size:14px; color:#aaa;">Starting next level automatically...</p>
-                    `;
+                    document.getElementById('level-popup-title').innerText = `🎉 Level ${GameState.level} Cleared! 🎉`;
+                    document.getElementById('level-popup-reward').innerText = `Reward: +${goldBonus} 🪙 | +${riceBonus} 🌾`;
                     popup.style.display = 'block';
                 }
             }
@@ -1122,11 +955,7 @@ function handleGameLogic() {
             let popup = document.getElementById('level-popup');
             if(popup) popup.style.display = 'none';
             
-            GameState.level++;
-            GameState.phase = 'build';
-            GameState.timer = 3600; 
-            GameState.enemiesSpawned = false;
-
+            GameState.level++; GameState.phase = 'build'; GameState.timer = 3600; GameState.enemiesSpawned = false;
             let nextLevelAdvice = [
                 `Excellent victory! But beware, Level ${GameState.level} brings stronger foes.`,
                 "Expand your Paddy Fields to increase Rice production.",
@@ -1151,9 +980,6 @@ const getBtnHTML = (id, type, costGold, costRice, extraClass="") => `
     </button>
 `;
 
-
-// Adjust building prices (Gold, Rice) below:
-
 function setupUIButtons() {
     const uiBottom = document.getElementById('ui-bottom');
     if (uiBottom) { 
@@ -1165,7 +991,6 @@ function setupUIButtons() {
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-stables', 'Stables', 200, 0));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-wall', 'Wall', 0, 50));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-tower', 'Tower', 100, 50));
-        
         uiBottom.insertAdjacentHTML('beforeend', `<button id="btn-cancel" class="build-btn hidden">CANCEL</button>`);
     }
 
@@ -1177,61 +1002,27 @@ function setupUIButtons() {
         }
     });
 
-    if (!document.getElementById('level-popup')) {
-        let popup = document.createElement('div');
-        popup.id = 'level-popup';
-        popup.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:15px; padding:30px; text-align:center; z-index:9999; color:white; box-shadow:0 10px 30px rgba(0,0,0,0.9); pointer-events:none;";
-        document.body.appendChild(popup);
-    }
-
-    if (!document.getElementById('level-status-container')) {
-        const statusCont = document.createElement('div');
-        statusCont.id = 'level-status-container';
-        statusCont.style.cssText = "position:absolute; top:25px; left:50%; transform:translateX(-50%); display:flex; flex-direction:row; align-items:center; justify-content:center; gap:20px; z-index:20; pointer-events:none; width:max-content; white-space:nowrap;";
-        
-        const statusText = document.createElement('div');
-        statusText.id = 'level-status-text';
-        statusText.style.cssText = "pointer-events:auto; display:flex; align-items:center; gap:15px;";
-        statusCont.appendChild(statusText);
-
-        const btnEarly = document.createElement('button');
-        btnEarly.id = 'btn-early-wave';
-        btnEarly.style.cssText = "background: linear-gradient(180deg, #F9DF9F 0%, #D4AF37 50%, #AA7C11 100%); border: 1px solid #5a3a00; color: #fff; padding: 10px 24px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6), inset 0 0 10px rgba(255,255,255,0.4); text-align: center; pointer-events: auto; touch-action: manipulation; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);";
-        
+    const btnEarly = document.getElementById('btn-early-wave');
+    if (btnEarly) {
         btnEarly.onpointerdown = function(e) {
             e.stopPropagation(); 
             if(GameState.phase === 'build' && !GameState.isPaused) {
-                GameState.gold += 100;
-                GameState.timer = 0; 
-                updateDOM();
+                GameState.gold += 100; GameState.timer = 0; updateDOM();
                 let palace = GameState.buildings.find(b => b.type === 'Palace');
                 if(palace) GameState.floatingTexts.push(new FloatingText(palace.gridX+1, palace.gridY+1, "+100 Gold!", "#D4AF37"));
             }
         };
-        statusCont.appendChild(btnEarly);
-        document.body.appendChild(statusCont);
     }
 
     const wrapper = document.getElementById('bottom-dock-wrapper');
-    if (wrapper && !document.getElementById('panel-toggle-btn')) {
-        const toggleBtn = document.createElement('button');
-        toggleBtn.id = 'panel-toggle-btn';
-        toggleBtn.innerHTML = '▼';
-        
-        // CSS changed to stay inside the wrapper logic properly
-        toggleBtn.style.cssText = "position:absolute; top:-25px; left:50%; transform:translateX(-50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-bottom:none; color:var(--gold-primary); font-size:12px; padding:4px 35px; border-radius:10px 10px 0 0; cursor:pointer; z-index:15; box-shadow:0 -4px 10px rgba(0,0,0,0.5); pointer-events:auto; touch-action:manipulation;";
-        
-        wrapper.appendChild(toggleBtn);
-        
-        // Hide using CSS class instead of inline styles for perfect scaling
+    const toggleBtn = document.getElementById('panel-toggle-btn');
+    if (wrapper && toggleBtn) {
         toggleBtn.onpointerdown = function(e) {
             e.stopPropagation();
             if (wrapper.classList.contains('dock-hidden')) {
-                wrapper.classList.remove('dock-hidden');
-                toggleBtn.innerHTML = '▼';
+                wrapper.classList.remove('dock-hidden'); toggleBtn.innerHTML = '▼';
             } else {
-                wrapper.classList.add('dock-hidden');
-                toggleBtn.innerHTML = '▲';
+                wrapper.classList.add('dock-hidden'); toggleBtn.innerHTML = '▲';
             }
         };
     }
@@ -1241,65 +1032,17 @@ window.addEventListener('DOMContentLoaded', () => {
     setupUIButtons();
 	updateDOM();
 
-    // --- PAUSE, SETTINGS & FULLSCREEN UI INJECTION ---
     const btnSettings = document.getElementById('btn-settings');
     const btnPause = document.getElementById('btn-pause');
     const btnFullscreen = document.getElementById('btn-fullscreen');
+    const settingsModal = document.getElementById('settings-modal');
+    const pauseOverlay = document.getElementById('pause-overlay');
 
-   // Settings Modal
-    if(btnSettings) {
-        let settingsModal = document.createElement('div');
-        settingsModal.id = 'settings-modal';
-        settingsModal.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:15px; padding:30px; text-align:center; z-index:10001; color:white; box-shadow:0 10px 30px rgba(0,0,0,0.9); min-width: 320px;";
-        
-        settingsModal.innerHTML = `
-            <h2 style="font-family:var(--font-heading); color:var(--gold-primary); margin-bottom:20px; font-size:24px;">⚙️ Game Settings</h2>
-            
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="font-size: 16px; font-family:var(--font-body); color: var(--gold-light);">Music Volume: <span id="bgm-vol-text">30%</span></label>
-                <input type="range" id="bgm-slider" min="0" max="100" value="30" style="width: 100%; cursor: pointer; margin-top: 5px; accent-color: var(--gold-primary);">
-            </div>
-
-            <div style="margin-bottom: 25px; text-align: left;">
-                <label style="font-size: 16px; font-family:var(--font-body); color: var(--gold-light);">Effects Volume: <span id="sfx-vol-text">80%</span></label>
-                <input type="range" id="sfx-slider" min="0" max="100" value="80" style="width: 100%; cursor: pointer; margin-top: 5px; accent-color: var(--gold-primary);">
-            </div>
-
-            <div style="margin-bottom: 15px; text-align: left;">
-                <label style="font-size: 16px; margin-right: 10px; font-family:var(--font-body);">Select Land:</label>
-                <select id="land-select" style="padding: 6px 10px; font-size: 14px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
-                    <option value="land1" selected>Land 1</option>
-                    <option value="land2">Land 2</option>
-                    <option value="land3">Land 3</option>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 25px; text-align: left;">
-                <label style="font-size: 16px; margin-right: 10px; font-family:var(--font-body);">Difficulty:</label>
-                <select id="difficulty-select" style="padding: 6px 10px; font-size: 14px; background: #162545; color: white; border: 1px solid var(--gold-primary); border-radius: 5px; outline: none; cursor: pointer;">
-                    <option value="easy">Easy (Less Enemies, Less Rewards)</option>
-                    <option value="normal" selected>Normal</option>
-                    <option value="hard">Hard (More Enemies, More Rewards)</option>
-                </select>
-            </div>
-			
-			<div style="margin-bottom: 25px; text-align: center;">
-                <button id="btn-force-restart" style="background: linear-gradient(180deg, #8B0000 0%, #500000 100%); border: 1px solid #FF6347; color: #fff; padding: 8px 20px; border-radius: 6px; font-family: var(--font-heading); font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.6);">
-                    ⚠️ RESTART GAME
-                </button>
-            </div>
-			
-            <button id="btn-close-settings" style="background: linear-gradient(180deg, #F9DF9F 0%, #D4AF37 50%, #AA7C11 100%); border: 1px solid #5a3a00; color: #000; padding: 10px 30px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 16px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6);">Save & Close</button>
-        `;
-        document.body.appendChild(settingsModal);
-
-        // Music Slider එක වෙනස් කරද්දි සද්දෙ වෙනස් වෙනවා
+    if(btnSettings && settingsModal) {
         document.getElementById('bgm-slider').addEventListener('input', (e) => {
             globalBGMVolume = e.target.value / 100;
             document.getElementById('bgm-vol-text').innerText = e.target.value + '%';
             sounds.bgm.volume = globalBGMVolume;
-            
-            // සද්දෙ 0ට වඩා වැඩිකරොත් ඉබේම Mute එක අයින් වෙනවා
             if(globalBGMVolume > 0 && isMuted) {
                 isMuted = false;
                 let btnMute = document.getElementById('btn-mute');
@@ -1308,7 +1051,6 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Effect Slider එක වෙනස් කරද්දි අනිත් සද්ද වෙනස් වෙනවා
         document.getElementById('sfx-slider').addEventListener('input', (e) => {
             globalSFXVolume = e.target.value / 100;
             document.getElementById('sfx-vol-text').innerText = e.target.value + '%';
@@ -1318,100 +1060,49 @@ window.addEventListener('DOMContentLoaded', () => {
             settingsModal.style.display = settingsModal.style.display === 'none' ? 'block' : 'none';
         });
 
-        document.getElementById('land-select').addEventListener('change', (e) => {
-            GameState.currentLand = e.target.value;
-        });
-
-        document.getElementById('difficulty-select').addEventListener('change', (e) => {
-            GameState.difficulty = e.target.value;
-        });
-
-        document.getElementById('btn-close-settings').addEventListener('click', () => {
-            settingsModal.style.display = 'none';
-        });
+        document.getElementById('land-select').addEventListener('change', (e) => { GameState.currentLand = e.target.value; });
+        document.getElementById('difficulty-select').addEventListener('change', (e) => { GameState.difficulty = e.target.value; });
+        document.getElementById('btn-close-settings').addEventListener('click', () => { settingsModal.style.display = 'none'; });
 		
-		// Settings ඇතුලේ තියෙන Restart Button එක එබුවම වෙන දේ
         document.getElementById('btn-force-restart').addEventListener('click', () => {
-            // වැරදිලා එබුනොත් Save එක මැකෙන නිසා අහනවා ෂුවර් ද කියලා
             let confirmRestart = confirm("Are you sure you want to restart? All your progress and current base will be lost!");
-            
             if (confirmRestart) {
 				GameState.isRestarting = true;
-                localStorage.removeItem('apexLionSave'); // පරණ Save එක මකා දමනවා
-                location.reload(); // පේජ් එක රීලෝඩ් කරනවා (එතකොට අලුතින්ම පටන් ගනීවි)
+                localStorage.removeItem('apexLionSave'); 
+                location.reload(); 
             }
         });
     }
-    // Pause Overlay
-    if(btnPause) {
-        let pauseOverlay = document.createElement('div');
-        pauseOverlay.id = 'pause-overlay';
-        pauseOverlay.style.cssText = "display:none; position:absolute; top:0; left:0; width:100vw; height:100vh; background:rgba(6, 11, 20, 0.85); z-index:10000; justify-content:center; align-items:center; flex-direction:column; backdrop-filter: blur(5px);";
-        pauseOverlay.innerHTML = `
-            <h1 style="font-family:var(--font-heading); color:var(--gold-primary); font-size:60px; text-shadow: 0 4px 15px rgba(0,0,0,1); margin-bottom: 40px; text-align:center;">PAUSED</h1>
-            <button id="btn-resume-game" style="background: linear-gradient(180deg, #F9DF9F 0%, #D4AF37 50%, #AA7C11 100%); border: 2px solid #5a3a00; color: #fff; padding: 15px 50px; border-radius: 12px; font-family: var(--font-heading); font-weight: bold; font-size: 26px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,255,255,0.4); text-shadow: 1px 1px 3px rgba(0,0,0,0.9); transition: transform 0.2s;">
-                ▶ RESUME
-            </button>
-        `;
-        document.body.appendChild(pauseOverlay);
 
+    if(btnPause && pauseOverlay) {
         btnPause.addEventListener('click', () => {
             GameState.isPaused = true;
             pauseOverlay.style.display = 'flex';
         });
-
         document.getElementById('btn-resume-game').addEventListener('click', () => {
             GameState.isPaused = false;
             pauseOverlay.style.display = 'none';
         });
     }
 
-    // Fullscreen Button (Cross-Browser support added)
     if(btnFullscreen) {
         btnFullscreen.addEventListener('click', () => {
-            let doc = window.document;
-            let docEl = doc.documentElement;
-
+            let doc = window.document; let docEl = doc.documentElement;
             let requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
             let cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
 
             if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-                if(requestFullScreen) {
-                    requestFullScreen.call(docEl).catch(err => {
-                        showMessage("Fullscreen not supported on this device.", true);
-                    });
-                } else {
-                    showMessage("Fullscreen not supported on iOS Safari.", true);
-                }
-            }
-            else {
-                if(cancelFullScreen) {
-                    cancelFullScreen.call(doc);
-                }
+                if(requestFullScreen) { requestFullScreen.call(docEl).catch(err => { showMessage("Fullscreen not supported on this device.", true); }); } 
+                else { showMessage("Fullscreen not supported on iOS Safari.", true); }
+            } else {
+                if(cancelFullScreen) { cancelFullScreen.call(doc); }
             }
         });
     }
 
-    // --- GAME OVER POPUP INJECTION ---
-    if (!document.getElementById('game-over-popup')) {
-        let goPopup = document.createElement('div');
-        goPopup.id = 'game-over-popup';
-        goPopup.style.cssText = "display:none; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(20, 5, 5, 0.95); border:2px solid #FF0000; border-radius:15px; padding:40px; text-align:center; z-index:10005; color:white; box-shadow:0 10px 50px rgba(255,0,0,0.6);";
-        goPopup.innerHTML = `
-            <h1 style="font-family:var(--font-heading); color:#FF4500; margin:0 0 15px 0; font-size:40px; text-shadow: 2px 2px 5px black;">💀 GAME OVER 💀</h1>
-            <p style="margin:10px 0; font-size:20px; font-family:var(--font-body);">Your base has been destroyed!</p>
-            <p id="game-over-level-text" style="margin:5px 0 25px 0; font-size:18px; color:#aaa;">You survived until Level 1.</p>
-            <button id="btn-restart-game" style="background: linear-gradient(180deg, #8B0000 0%, #500000 100%); border: 1px solid #FF6347; color: #fff; padding: 12px 35px; border-radius: 8px; font-family: var(--font-heading); font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.6); transition: 0.2s;">
-                🔄 RESTART GAME
-            </button>
-        `;
-        document.body.appendChild(goPopup);
-
-        document.getElementById('btn-restart-game').addEventListener('click', () => {
-            localStorage.removeItem('apexLionSave'); // පරණ Save එක මකා දමනවා
-            location.reload(); 
-        });
-    }
+    document.getElementById('btn-restart-game')?.addEventListener('click', () => {
+        localStorage.removeItem('apexLionSave'); location.reload(); 
+    });
 
     showRoyalAdvisor([
         "Greetings, Your Majesty! I am your Royal Advisor. I shall guide you in building this kingdom.",
@@ -1425,7 +1116,6 @@ function updateDOM() {
     if(uiGold) uiGold.innerText = GameState.gold; 
     if(uiRice) uiRice.innerText = GameState.rice; 
 
-    // --- Advanced Palace Button Logic with Bounce Animation ---
     const palaceBtn = document.getElementById('btn-palace');
     if (palaceBtn) {
         let hasPalace = GameState.buildings.some(b => b.type === 'Palace');
@@ -1436,43 +1126,29 @@ function updateDOM() {
             let nextImg = GameState.palaceLevel === 1 ? imagePaths.palace2 : imagePaths.palace3;
             
             if (GameState.level > GameState.palaceLevel && GameState.palaceLevel < 3) {
-                // Upgrade කරන්න පුළුවන් වෙලාව 
-                palaceBtn.style.opacity = '1'; 
-                palaceBtn.style.pointerEvents = 'auto'; 
-                palaceBtn.style.filter = 'none'; 
-                palaceBtn.classList.add('bounce-active'); // <--- Animation එක දානවා
-                
+                palaceBtn.style.opacity = '1'; palaceBtn.style.pointerEvents = 'auto'; palaceBtn.style.filter = 'none'; 
+                palaceBtn.classList.add('bounce-active'); 
                 if (titleSpan) titleSpan.innerText = 'UPGRADE';
                 if (costDiv) costDiv.innerHTML = '<span class="icon">🪙</span> 500 G';
                 if (nextImg) palaceBtn.style.backgroundImage = `url("${nextImg}")`; 
             } else {
-                // Upgrade කරන්න බැරි වෙලාව (Locked)
-                palaceBtn.style.opacity = '0.4'; 
-                palaceBtn.style.pointerEvents = 'none'; 
-                palaceBtn.style.filter = 'grayscale(100%)'; 
-                palaceBtn.classList.remove('bounce-active'); // <--- Animation එක අයින් කරනවා
-                
+                palaceBtn.style.opacity = '0.4'; palaceBtn.style.pointerEvents = 'none'; palaceBtn.style.filter = 'grayscale(100%)'; 
+                palaceBtn.classList.remove('bounce-active'); 
                 if (GameState.palaceLevel < 3) {
                     if (titleSpan) titleSpan.innerText = 'LOCKED';
                     if (costDiv) costDiv.innerHTML = '<span class="icon">🪙</span> 500 G';
                     if (nextImg) palaceBtn.style.backgroundImage = `url("${nextImg}")`; 
                 } else {
-                    // Level 3 (උපරිම) ආවම
                     if (titleSpan) titleSpan.innerText = 'MAX LEVEL';
                     if (costDiv) costDiv.innerHTML = '';
                     if (imagePaths.palace3) palaceBtn.style.backgroundImage = `url("${imagePaths.palace3}")`;
                 }
             }
         } else {
-            // තාම මාලිගාවක් හදලා නැත්නම් (මුලින්ම හදන වෙලාව)
-            palaceBtn.style.opacity = '1';
-            palaceBtn.style.pointerEvents = 'auto';
-            palaceBtn.style.filter = 'none';
-            palaceBtn.classList.remove('bounce-active'); // <--- Animation එක අයින් කරනවා
-            
+            palaceBtn.style.opacity = '1'; palaceBtn.style.pointerEvents = 'auto'; palaceBtn.style.filter = 'none';
+            palaceBtn.classList.remove('bounce-active'); 
             if (titleSpan) titleSpan.innerText = 'PALACE';
             if (costDiv) costDiv.innerHTML = '<span class="icon">🪙</span> 200 G';
-            
             let svgData = svgs.palaceIcon ? `url('data:image/svg+xml;utf8,${encodeURIComponent(svgs.palaceIcon.replace('data:image/svg+xml;utf8,', ''))}')` : '';
             palaceBtn.style.backgroundImage = imagePaths.palace ? `url("${imagePaths.palace}"), ${svgData}` : svgData;
         }
@@ -1481,9 +1157,7 @@ function updateDOM() {
 
 function showMessage(msg, isError = false) { 
     if(uiMessage) { 
-        uiMessage.innerText = msg; 
-        uiMessage.style.color = isError ? '#FF6347' : '#00FA9A'; 
-        uiMessage.style.borderLeftColor = isError ? '#FF6347' : '#00FA9A'; 
+        uiMessage.innerText = msg; uiMessage.style.color = isError ? '#FF6347' : '#00FA9A'; uiMessage.style.borderLeftColor = isError ? '#FF6347' : '#00FA9A'; 
     } 
 }
 
@@ -1495,6 +1169,7 @@ function setPlacementMode(type, goldCost, riceCost) {
     if(btnCancel) btnCancel.classList.remove('hidden'); 
     canvas.style.cursor = 'crosshair'; showMessage(`Placing ${type}...`);
 }
+
 function cancelPlacement() { 
     GameState.mode = 'normal'; GameState.selectedBuilding = null; 
     const btnCancel = document.getElementById('btn-cancel');
@@ -1503,46 +1178,30 @@ function cancelPlacement() {
 }
 
 document.body.addEventListener('click', (e) => {
-	
-	if (e.target.closest('button')) {
-        playSound('click'); 
-    }
+	if (e.target.closest('button')) playSound('click'); 
 	
     if (e.target.closest('.build-btn')) {
         const btn = e.target.closest('.build-btn');
         if (btn.id === 'btn-cancel') { cancelPlacement(); return; }
-        // Palace බට්න් එක එබුවම
         if (btn.id === 'btn-palace') {
             let palace = GameState.buildings.find(b => b.type === 'Palace');
             if (palace) {
-                // මාලිගාවක් දැනටමත් තියෙනවා නම් මේකෙන් වෙන්නේ Upgrade කරන එකයි
                 if (GameState.isPaused) return;
                 if (GameState.gold >= 500) { 
-                    GameState.gold -= 500; 
-                    GameState.palaceLevel++; 
-                    palace.maxHp += 2000; 
-                    palace.hp = palace.maxHp; 
-                    updateDOM(); 
-                    playSound('build'); // Upgrade වෙද්දිත් සද්දේ එන්න
-                    showMessage(`Palace Upgraded to Level ${GameState.palaceLevel}!`); 
+                    GameState.gold -= 500; GameState.palaceLevel++; palace.maxHp += 2000; palace.hp = palace.maxHp; 
+                    updateDOM(); playSound('build'); showMessage(`Palace Upgraded to Level ${GameState.palaceLevel}!`); 
                     GameState.floatingTexts.push(new FloatingText(palace.gridX+1, palace.gridY+1, `LEVEL UP!`, '#FFD700')); 
-                } else { 
-                    showMessage("Need 500 Gold to upgrade!", true); 
-                } 
-                return; // Placement mode එකට යන එක නවත්වනවා
+                } else { showMessage("Need 500 Gold to upgrade!", true); } 
+                return; 
             }
         }
         setPlacementMode(btn.dataset.type, parseInt(btn.dataset.costGold), parseInt(btn.dataset.costRice));
     }
 });
 
-// --- Mouse and Touch Controls ---
 canvas.addEventListener('mousedown', (e) => { 
     if (e.button === 0 && GameState.mode === 'normal') { 
-        isDragging = true; 
-        dragStart.x = e.clientX - camera.x; 
-        dragStart.y = e.clientY - camera.y; 
-        canvas.style.cursor = 'grabbing'; 
+        isDragging = true; dragStart.x = e.clientX - camera.x; dragStart.y = e.clientY - camera.y; canvas.style.cursor = 'grabbing'; 
     } 
 });
 
@@ -1558,62 +1217,72 @@ canvas.addEventListener('mousemove', (e) => {
 
 window.addEventListener('mouseup', () => { isDragging = false; if (GameState.mode === 'normal') canvas.style.cursor = 'grab'; });
 
-// --- UPDATED TOUCH CONTROLS FOR MOBILE (DRAG & ZOOM) ---
+// ==========================================
+// --- MOUSE & TOUCH CONTROLS (WITH DRAG & DROP) ---
+// ==========================================
+
+canvas.addEventListener('mousedown', (e) => { 
+    if (e.button === 0 && GameState.mode === 'normal') { 
+        isDragging = true; dragStart.x = e.clientX - camera.x; dragStart.y = e.clientY - camera.y; canvas.style.cursor = 'grabbing'; 
+    } 
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (isDragging) { 
+        camera.x = e.clientX - dragStart.x; camera.y = e.clientY - dragStart.y; 
+        let oldX = camera.x; let oldY = camera.y; clampCamera(); 
+        if (camera.x !== oldX) dragStart.x = e.clientX - camera.x;
+        if (camera.y !== oldY) dragStart.y = e.clientY - camera.y; return; 
+    }
+    const gridPos = screenToIso(e.clientX, e.clientY); mouse.gridX = Math.floor(gridPos.x); mouse.gridY = Math.floor(gridPos.y);
+});
+
+window.addEventListener('mouseup', () => { isDragging = false; if (GameState.mode === 'normal') canvas.style.cursor = 'grab'; });
+
 canvas.addEventListener('touchstart', (e) => {
     if (e.touches.length === 2) {
         e.preventDefault(); 
-        initialPinchDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
+        initialPinchDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         return;
     }
-
     touchMoved = false;
     if (GameState.mode === 'normal') { 
-        isDragging = true; 
-        dragStart.x = e.touches[0].clientX - camera.x; 
-        dragStart.y = e.touches[0].clientY - camera.y; 
+        isDragging = true; dragStart.x = e.touches[0].clientX - camera.x; dragStart.y = e.touches[0].clientY - camera.y; 
     } else if (GameState.mode === 'placement_mode') { 
-        const gridPos = screenToIso(e.touches[0].clientX, e.touches[0].clientY); 
-        mouse.gridX = Math.floor(gridPos.x); 
-        mouse.gridY = Math.floor(gridPos.y); 
+        const gridPos = screenToIso(e.touches[0].clientX, e.touches[0].clientY); mouse.gridX = Math.floor(gridPos.x); mouse.gridY = Math.floor(gridPos.y); 
     }
 }, {passive: false});
 
 canvas.addEventListener('touchmove', (e) => { 
-    e.preventDefault(); 
-    touchMoved = true; 
+    e.preventDefault(); touchMoved = true; 
     
-    // Zoom Logic
     if (e.touches.length === 2 && initialPinchDistance !== null) {
-        let currentDistance = Math.hypot(
-            e.touches[0].clientX - e.touches[1].clientX,
-            e.touches[0].clientY - e.touches[1].clientY
-        );
+        let currentDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
         let diff = currentDistance - initialPinchDistance;
-        let centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-        let centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        
-        doZoom(diff * 0.005, centerX, centerY); 
-        initialPinchDistance = currentDistance;
-        return;
+        let centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2; let centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        doZoom(diff * 0.005, centerX, centerY); initialPinchDistance = currentDistance; return;
     }
-
-    // Drag Logic
-    if (isDragging && e.touches.length === 1) { 
-        camera.x = e.touches[0].clientX - dragStart.x; 
-        camera.y = e.touches[0].clientY - dragStart.y; 
+    
+    if (isDragging && e.touches.length === 1 && GameState.mode === 'normal') { 
+        camera.x = e.touches[0].clientX - dragStart.x; camera.y = e.touches[0].clientY - dragStart.y; 
         let oldX = camera.x; let oldY = camera.y; clampCamera(); 
         if (camera.x !== oldX) dragStart.x = e.touches[0].clientX - camera.x;
         if (camera.y !== oldY) dragStart.y = e.touches[0].clientY - camera.y;
-    } 
+    } else if (e.touches.length === 1 && GameState.mode === 'placement_mode') {
+        const gridPos = screenToIso(e.touches[0].clientX, e.touches[0].clientY); 
+        mouse.gridX = Math.floor(gridPos.x); mouse.gridY = Math.floor(gridPos.y); 
+    }
 }, {passive: false});
 
 window.addEventListener('touchend', (e) => { 
     isDragging = false; 
-    if (e.touches.length < 2) {
-        initialPinchDistance = null;
+    if (e.touches.length < 2) { initialPinchDistance = null; } 
+
+    // --- DRAG AND DROP LOGIC (Mobile) ---
+    // ඇඟිල්ල ඉස්සුවම (release කරද්දි), drag කරලා තියෙනවා නම් කෙලින්ම place වෙනවා
+    if (GameState.mode === 'placement_mode' && touchMoved) {
+        attemptPlacement();
+        touchMoved = false; 
     }
 });
 
@@ -1622,109 +1291,76 @@ canvas.addEventListener('click', (e) => {
     if (touchMoved || (e.target && e.target.tagName === 'BUTTON')) return; 
 
     if (GameState.mode === 'normal') {
-        let clientX = e.clientX;
-        let clientY = e.clientY;
-        if (clientX === undefined && e.changedTouches) {
-            clientX = e.changedTouches[0].clientX;
-            clientY = e.changedTouches[0].clientY;
-        }
+        let clientX = e.clientX; let clientY = e.clientY;
+        if (clientX === undefined && e.changedTouches) { clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
         if (clientX === undefined) return;
 
-        let exactIso = screenToIso(clientX, clientY);
-        let ex = exactIso.x;
-        let ey = exactIso.y;
+        let exactIso = screenToIso(clientX, clientY); let ex = exactIso.x; let ey = exactIso.y;
+        let clickedFriendly = null; let myTroops = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
+        for (let u of myTroops) { if (getDistance({x: ex, y: ey}, u) < 0.8) { clickedFriendly = u; break; } }
 
-        let clickedFriendly = null;
-        let myTroops = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
-        for (let u of myTroops) {
-            if (getDistance({x: ex, y: ey}, u) < 0.8) { 
-                clickedFriendly = u; break;
-            }
-        }
-
-        // --- TUTORIAL CLICK LOGIC ---
         if (clickedFriendly) {
             if (GameState.tutorialState === 'select_troop') {
                 GameState.tutorialState = 'command_attack'; 
-                showRoyalAdvisor([
-                    "Excellent! The soldier is ready for your command.",
-                    "Now, CLICK on an Enemy to order the attack!"
-                ]);
+                showRoyalAdvisor(["Excellent! The soldier is ready for your command.", "Now, CLICK on an Enemy to order the attack!"]);
             }
-            GameState.selectedUnit = clickedFriendly;
-            GameState.floatingTexts.push(new FloatingText(clickedFriendly.x, clickedFriendly.y, "Ready!", "#00FF00"));
-            return;
+            GameState.selectedUnit = clickedFriendly; GameState.floatingTexts.push(new FloatingText(clickedFriendly.x, clickedFriendly.y, "Ready!", "#00FF00")); return;
         }
 
         if (GameState.selectedUnit) {
             let clickedEnemy = null;
-            for (let en of GameState.enemies) {
-                if (getDistance({x: ex, y: ey}, en) < 0.8) { clickedEnemy = en; break; }
-            }
-
+            for (let en of GameState.enemies) { if (getDistance({x: ex, y: ey}, en) < 0.8) { clickedEnemy = en; break; } }
             if (GameState.tutorialState === 'command_attack') {
                 GameState.tutorialState = 'done'; 
-                showRoyalAdvisor([
-                    "Brilliant strategy, My Lord!",
-                    "Your troops will now engage the target.",
-                    "Defend the Palace at all costs!"
-                ]);
+                showRoyalAdvisor(["Brilliant strategy, My Lord!", "Your troops will now engage the target.", "Defend the Palace at all costs!"]);
             }
-
             if (clickedEnemy) {
-                GameState.selectedUnit.manualTargetEnemy = clickedEnemy;
-                GameState.selectedUnit.manualTargetPos = null;
+                GameState.selectedUnit.manualTargetEnemy = clickedEnemy; GameState.selectedUnit.manualTargetPos = null;
                 GameState.floatingTexts.push(new FloatingText(ex, ey, "⚔️ Attack!", "#FF0000"));
             } else {
-                GameState.selectedUnit.manualTargetPos = { x: ex, y: ey };
-                GameState.selectedUnit.manualTargetEnemy = null;
+                GameState.selectedUnit.manualTargetPos = { x: ex, y: ey }; GameState.selectedUnit.manualTargetEnemy = null;
                 GameState.floatingTexts.push(new FloatingText(ex, ey, "🚩 Move", "#00FA9A"));
             }
-            GameState.selectedUnit = null; 
-            return;
+            GameState.selectedUnit = null; return;
         }
+    } else if (GameState.mode === 'placement_mode') {
+        // Desktop Click එකෙන් Place කරන තැන
+        let clientX = e.clientX; let clientY = e.clientY;
+        if (clientX === undefined && e.changedTouches) { clientX = e.changedTouches[0].clientX; clientY = e.changedTouches[0].clientY; }
+        if(clientX !== undefined) { const gridPos = screenToIso(clientX, clientY); mouse.gridX = Math.floor(gridPos.x); mouse.gridY = Math.floor(gridPos.y); }
+        
+        attemptPlacement();
     }
+});
 
-    if (GameState.mode !== 'placement_mode') return;
-    
-    let clientX = e.clientX;
-    let clientY = e.clientY;
-    if (clientX === undefined && e.changedTouches) {
-        clientX = e.changedTouches[0].clientX;
-        clientY = e.changedTouches[0].clientY;
-    }
-    
-    if(clientX !== undefined) { 
-        const gridPos = screenToIso(clientX, clientY); 
-        mouse.gridX = Math.floor(gridPos.x); mouse.gridY = Math.floor(gridPos.y); 
-    }
+// --- REUSABLE PLACEMENT FUNCTION ---
+// හැමතැනම code එක ලියන්නැතුව කෙලින්ම මේ function එක call කරාම වැඩේ වෙනවා
+function attemptPlacement() {
     const { gridX: gx, gridY: gy } = mouse;
+    if (gx < 0 || gy < 0 || !GameState.selectedBuilding) return;
+
     const { type, goldCost, riceCost, size } = GameState.selectedBuilding;
-	
-	if (type === 'Palace' && GameState.buildings.some(b => b.type === 'Palace')) {
-        return showMessage("Your Majesty, a kingdom can only have one Palace!", true);
+    
+    if (type === 'Palace' && GameState.buildings.some(b => b.type === 'Palace')) { 
+        return showMessage("Your Majesty, a kingdom can only have one Palace!", true); 
     }
     
     let isBlocked = false;
-    for(let dx=0; dx<size; dx++) for(let dy=0; dy<size; dy++) if (isTileBlocked(gx+dx, gy+dy, null)) isBlocked = true;
+    for(let dx=0; dx<size; dx++) {
+        for(let dy=0; dy<size; dy++) {
+            if (isTileBlocked(gx+dx, gy+dy, null)) isBlocked = true;
+        }
+    }
     if (isBlocked) return showMessage("Area blocked or outside bounds!", true);
 
     if (GameState.gold >= goldCost && GameState.rice >= riceCost) {
         GameState.gold -= goldCost; GameState.rice -= riceCost; updateDOM();
         GameState.buildings.push(new Building(gx, gy, type));
         
-        // --- Where each building plays a different sound ---
-        if (type === 'Wall') {
-            playSound('wall_build');
-        } else if (type === 'Tower') {
-            playSound('tower_build');
-        } else if (type === 'Palace') {
-            playSound('build'); 
-        } else {
-            playSound('build'); 
-        }
-        // --------------------------------------------------------
-		
+        if (type === 'Wall') { playSound('wall_build'); } 
+        else if (type === 'Tower') { playSound('tower_build'); } 
+        else { playSound('build'); }
+        
         let spawnX = gx + size; let spawnY = gy + size;
         if (spawnX >= MAP_COLS) spawnX = gx - 1; if (spawnY >= MAP_ROWS) spawnY = gy - 1;
 
@@ -1735,12 +1371,11 @@ canvas.addEventListener('click', (e) => {
         else if (type === 'Stables') { for(let i=0; i<3; i++) GameState.horses.push(new Horse(spawnX, spawnY)); } 
 
         showMessage(`${type} constructed!`); 
-		// Wall එකක් නම් විතරක් placement එක කැන්සල් කරන්නේ නෑ, දිගටම තියන්න දෙනවා
-		if (type !== 'Wall') {
-			cancelPlacement(); 
-		}
-    } else showMessage("Not enough resources!", true);
-});
+        if (type !== 'Wall') { cancelPlacement(); }
+    } else {
+        showMessage("Not enough resources!", true);
+    }
+}
 
 function drawDiamond(ctx, screenX, screenY, colorTop, colorBorder) {
     ctx.beginPath(); ctx.moveTo(screenX, screenY - TILE_H / 2); ctx.lineTo(screenX + TILE_W / 2, screenY); ctx.lineTo(screenX, screenY + TILE_H / 2); ctx.lineTo(screenX - TILE_W / 2, screenY); ctx.closePath();
@@ -1758,7 +1393,6 @@ function drawGame() {
     try {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.save(); ctx.translate(camera.x, camera.y); ctx.scale(zoom, zoom);
-
         handleGameLogic(); 
 
         GameState.buildings = GameState.buildings.filter(b => b.hp > 0);
@@ -1771,23 +1405,18 @@ function drawGame() {
         const currentLandKey = GameState.currentLand;
         const gridImg = images[currentLandKey];
         const config = GRID_IMAGE_CONFIG[currentLandKey];
-        
         let useImageGrid = (imagePaths[currentLandKey] && imagePaths[currentLandKey] !== "" && gridImg && gridImg.complete && gridImg.naturalWidth > 0);
 
         if (useImageGrid) {
             ctx.drawImage(gridImg, config.offsetX, config.offsetY, config.width, config.height);
-			
-			// --------(Faint Grid) --------
             ctx.save();
             for (let y = 0; y < MAP_ROWS; y++) {
                 for (let x = 0; x < MAP_COLS; x++) {
                     const pos = isoToScreen(x, y);
-                    
                     drawDiamond(ctx, pos.x, pos.y, 'rgba(0,0,0,0)', 'rgba(255, 255, 255, 0.2)');
                 }
             }
             ctx.restore();
-            // -------------------------------------------------------------------
             
             if (GameState.mode === 'placement_mode') { 
                 for (let y = 0; y < MAP_ROWS; y++) {
@@ -1804,12 +1433,10 @@ function drawGame() {
             }
         } else {
             drawSigiriyaRockBase();
-
             for (let y = 0; y < MAP_ROWS; y++) {
                 for (let x = 0; x < MAP_COLS; x++) {
                     const pos = isoToScreen(x, y); 
                     drawDiamond(ctx, pos.x, pos.y, (x + y) % 2 === 0 ? '#5A9E24' : '#4E8D1E', '#3E7017');
-                    
                     if (GameState.mode === 'placement_mode') { 
                         const size = GameState.selectedBuilding.size; const bx = mouse.gridX; const by = mouse.gridY;
                         if (x >= bx && x < bx + size && y >= by && y < by + size) {
@@ -1823,13 +1450,7 @@ function drawGame() {
         }
 
         let renderQueue = [];
-        
-        GameState.buildings.forEach(b => { 
-            if(!GameState.isPaused) b.update(); 
-            let d = b.gridX + b.gridY + (b.type === 'Paddy Field' ? -0.1 : b.size * 0.8);
-            renderQueue.push({ obj: b, type: 'building', depth: d }); 
-        });
-        
+        GameState.buildings.forEach(b => { if(!GameState.isPaused) b.update(); let d = b.gridX + b.gridY + (b.type === 'Paddy Field' ? -0.1 : b.size * 0.8); renderQueue.push({ obj: b, type: 'building', depth: d }); });
         GameState.villagers.forEach(v => { if(!GameState.isPaused) v.update(); renderQueue.push({ obj: v, type: 'villager', depth: v.x + v.y }); });
         GameState.soldiers.forEach(s => { if(!GameState.isPaused) s.update(); renderQueue.push({ obj: s, type: 'soldier', depth: s.x + s.y }); });
         GameState.elephants.forEach(el => { if(!GameState.isPaused) el.update(); renderQueue.push({ obj: el, type: 'elephant', depth: el.x + el.y }); });
@@ -1837,114 +1458,62 @@ function drawGame() {
         GameState.enemies.forEach(e => { if(!GameState.isPaused) e.update(); renderQueue.push({ obj: e, type: 'enemy', depth: e.x + e.y }); });
 
         renderQueue.sort((a, b) => a.depth - b.depth);
-        renderQueue.forEach(item => {
-            const pos = isoToScreen(item.type === 'building' ? item.obj.gridX : item.obj.x, item.type === 'building' ? item.obj.gridY : item.obj.y);
-            item.obj.draw(ctx, pos.x, pos.y);
-        });
+        renderQueue.forEach(item => { const pos = isoToScreen(item.type === 'building' ? item.obj.gridX : item.obj.x, item.type === 'building' ? item.obj.gridY : item.obj.y); item.obj.draw(ctx, pos.x, pos.y); });
 		
-		// --------(Building Preview) --------
         if (GameState.mode === 'placement_mode' && mouse.gridX >= 0 && mouse.gridY >= 0) {
             const { type, size } = GameState.selectedBuilding;
-            const bx = mouse.gridX; 
-            const by = mouse.gridY;
-            const pos = isoToScreen(bx, by);
+            const bx = mouse.gridX; const by = mouse.gridY; const pos = isoToScreen(bx, by);
 
-            ctx.save();
-            ctx.globalAlpha = 0.6; //(Preview)
-
-            // Choosing what's in the picture
+            ctx.save(); ctx.globalAlpha = 0.6; 
             let imgKey = type === 'Elephant Pen' ? 'elephantPen' : type === 'Paddy Field' ? 'paddyField' : type.toLowerCase();
             let img = images[imgKey];
 
             if (img && img.complete && img.naturalWidth > 0) {
-                let imageScale = 1.0;
-				let imgW = size * TILE_W * imageScale;
-				let imgH = imgW * (img.naturalHeight / img.naturalWidth);
-
-				if (type === 'Wall') {
-					imgW = 60; 
-					imgH = imgW * (img.naturalHeight / img.naturalWidth);
-				}
+                let imageScale = 1.0; let imgW = size * TILE_W * imageScale; let imgH = imgW * (img.naturalHeight / img.naturalWidth);
+				if (type === 'Wall') { imgW = 60; imgH = imgW * (img.naturalHeight / img.naturalWidth); }
                 const bottomY = pos.y - TILE_H / 2 + size * TILE_H;
-
                 let finalY = bottomY - imgH + (size * TILE_H * (imageScale - 1) / 2);
-
                 ctx.drawImage(img, pos.x - imgW / 2, finalY, imgW, imgH);
             }
             ctx.restore();
         }
-        // --------------------------------------------------------
 
         for (let i = GameState.floatingTexts.length - 1; i >= 0; i--) {
             let ft = GameState.floatingTexts[i]; ft.draw(ctx);
             if (ft.life <= 0) GameState.floatingTexts.splice(i, 1);
         }
 
-        // --- TUTORIAL POINTER RENDER LOGIC ---
         if (GameState.phase === 'combat' && GameState.level === 1 && !GameState.isPaused) {
-            
             if (GameState.tutorialState === 'select_troop') {
                 let troops = [...GameState.soldiers, ...GameState.elephants, ...GameState.horses, ...GameState.villagers];
                 let target = troops[0]; 
                 if (target) {
-                    let pos = isoToScreen(target.x, target.y);
-                    let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
-                    
-                    ctx.save();
-                    ctx.font = '50px "Poppins", sans-serif';
-                    ctx.textAlign = "center";
-                    ctx.fillText("👇", pos.x, pos.y - 50 - bob);
-                    
-                    let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10;
-                    ctx.beginPath();
-                    ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2);
-                    ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
-                    ctx.restore();
+                    let pos = isoToScreen(target.x, target.y); let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
+                    ctx.save(); ctx.font = '50px "Poppins", sans-serif'; ctx.textAlign = "center"; ctx.fillText("👇", pos.x, pos.y - 50 - bob);
+                    let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10; ctx.beginPath(); ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2); ctx.strokeStyle = "rgba(0, 255, 0, 0.8)"; ctx.lineWidth = 4; ctx.stroke(); ctx.restore();
                 }
             } 
             else if (GameState.tutorialState === 'command_attack' && GameState.selectedUnit) {
                 let targetEnemy = GameState.enemies[0]; 
                 if (targetEnemy) {
-                    let pos = isoToScreen(targetEnemy.x, targetEnemy.y);
-                    let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
-                    
-                    ctx.save();
-                    ctx.font = '50px "Poppins", sans-serif';
-                    ctx.textAlign = "center";
-                    ctx.fillText("👇", pos.x, pos.y - 50 - bob);
-                    
-                    let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10;
-                    ctx.beginPath();
-                    ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2);
-                    ctx.strokeStyle = "rgba(255, 0, 0, 0.8)";
-                    ctx.lineWidth = 4;
-                    ctx.stroke();
-                    ctx.restore();
+                    let pos = isoToScreen(targetEnemy.x, targetEnemy.y); let bob = Math.abs(Math.sin(Date.now() * 0.005)) * 15;
+                    ctx.save(); ctx.font = '50px "Poppins", sans-serif'; ctx.textAlign = "center"; ctx.fillText("👇", pos.x, pos.y - 50 - bob);
+                    let pulse = 20 + Math.abs(Math.sin(Date.now() * 0.005)) * 10; ctx.beginPath(); ctx.ellipse(pos.x, pos.y, pulse * 2, pulse, 0, 0, Math.PI * 2); ctx.strokeStyle = "rgba(255, 0, 0, 0.8)"; ctx.lineWidth = 4; ctx.stroke(); ctx.restore();
                 }
             }
         }
 
         ctx.restore();
 
-        // --- Status Text & Horizontal Layout ---
         let statusTextDiv = document.getElementById('level-status-text');
         let btnEarly = document.getElementById('btn-early-wave');
 
         if (GameState.phase === 'build') {
             let secs = Math.ceil(GameState.timer / 60);
-            if (statusTextDiv) {
-                statusTextDiv.innerHTML = `<span style="font-family:var(--font-heading); font-size:22px; color:var(--gold-primary); text-shadow: 0 2px 4px rgba(0,0,0,0.8);">👑 LEVEL ${GameState.level}</span> <span style="font-family:var(--font-body); font-size:16px; color:var(--text-main); text-shadow: 0 1px 3px rgba(0,0,0,0.8);"> | ⏳ Starts In: ${secs}s</span>`;
-            }
-            if (btnEarly) {
-                btnEarly.style.display = 'block';
-                btnEarly.innerHTML = `⚔️ START NOW (+100 Gold)`;
-            }
+            if (statusTextDiv) { statusTextDiv.innerHTML = `<span class="status-lvl-build">👑 LEVEL ${GameState.level}</span> <span class="status-desc-build"> | ⏳ Starts In: ${secs}s</span>`; }
+            if (btnEarly) { btnEarly.style.display = 'block'; btnEarly.innerHTML = `⚔️ START NOW (+100 Gold)`; }
         } else if (GameState.phase === 'combat') {
-            if (statusTextDiv) {
-                statusTextDiv.innerHTML = `<span style="font-family:var(--font-heading); font-size:22px; color:#FF6347; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">⚔️ LEVEL ${GameState.level}</span> <span style="font-family:var(--font-body); font-size:16px; color:var(--text-main); text-shadow: 0 1px 3px rgba(0,0,0,0.8);"> | Defeat ${GameState.enemies.length} Enemies!</span>`;
-            }
+            if (statusTextDiv) { statusTextDiv.innerHTML = `<span class="status-lvl-combat">⚔️ LEVEL ${GameState.level}</span> <span class="status-desc-combat"> | Defeat ${GameState.enemies.length} Enemies!</span>`; }
             if (btnEarly) btnEarly.style.display = 'none';
         } else {
             if (statusTextDiv) statusTextDiv.innerHTML = "";
@@ -1962,107 +1531,164 @@ updateDOM();
 // ==========================================
 
 function saveGame() {
-    // ගේම් ඕවර් වෙලා නම් Save කරන්නේ නෑ (නැත්තන් හැමදාම මැරිලා ඉඳීවි)
     if (GameState.phase === 'game_over' || GameState.phase === 'game_over_delay' || GameState.isRestarting) return; 
 
     const saveData = {
-        gold: GameState.gold, 
-        rice: GameState.rice, 
-        level: GameState.level,
-        phase: GameState.phase, 
-        timer: GameState.timer, 
-        palaceLevel: GameState.palaceLevel,
-        difficulty: GameState.difficulty, 
-        currentLand: GameState.currentLand,
-        buildings: GameState.buildings, 
-        villagers: GameState.villagers,
-        soldiers: GameState.soldiers, 
-        elephants: GameState.elephants,
-        horses: GameState.horses, 
-        enemies: GameState.enemies
+        gold: GameState.gold, rice: GameState.rice, level: GameState.level, phase: GameState.phase, 
+        timer: GameState.timer, palaceLevel: GameState.palaceLevel, difficulty: GameState.difficulty, 
+        currentLand: GameState.currentLand, buildings: GameState.buildings, villagers: GameState.villagers,
+        soldiers: GameState.soldiers, elephants: GameState.elephants, horses: GameState.horses, enemies: GameState.enemies
     };
-    
-    // Save data එක Text එකක් කරලා LocalStorage එකේ තියාගන්නවා
     localStorage.setItem('apexLionSave', JSON.stringify(saveData));
 }
 
 function loadGame() {
     const savedStr = localStorage.getItem('apexLionSave');
-    if (!savedStr) return; // Save එකක් නැත්නම් මුල ඉඳන් පටන් ගන්නවා
-    
+    if (!savedStr) return; 
     try {
         const saved = JSON.parse(savedStr);
-        
-        // සාමාන්‍ය දේවල් Load කිරීම
-        GameState.gold = saved.gold || 1000; 
-        GameState.rice = saved.rice || 500;
-        GameState.level = saved.level || 1; 
-        GameState.phase = saved.phase || 'build';
-        GameState.timer = saved.timer || 6300; 
-        GameState.palaceLevel = saved.palaceLevel || 1;
-        GameState.difficulty = saved.difficulty || 'normal'; 
+        GameState.gold = saved.gold || 1000; GameState.rice = saved.rice || 500; GameState.level = saved.level || 1; 
+        GameState.phase = saved.phase || 'build'; GameState.timer = saved.timer || 6300; 
+        GameState.palaceLevel = saved.palaceLevel || 1; GameState.difficulty = saved.difficulty || 'normal'; 
         GameState.currentLand = saved.currentLand || 'land1';
 
-        // Object විදිහට save උන දේවල් ආයෙත් Class වලට (Reconstruct) හරවනවා
-        GameState.buildings = (saved.buildings || []).map(b => {
-            let obj = new Building(b.gridX, b.gridY, b.type);
-            obj.hp = b.hp; obj.maxHp = b.maxHp; return obj;
-        });
-        GameState.villagers = (saved.villagers || []).map(v => {
-            let obj = new Villager(v.x, v.y); obj.hp = v.hp; obj.state = v.state; return obj;
-        });
-        GameState.soldiers = (saved.soldiers || []).map(s => {
-            let obj = new Soldier(s.x, s.y); obj.hp = s.hp; return obj;
-        });
-        GameState.elephants = (saved.elephants || []).map(e => {
-            let obj = new Elephant(e.x, e.y); obj.hp = e.hp; return obj;
-        });
-        GameState.horses = (saved.horses || []).map(h => {
-            let obj = new Horse(h.x, h.y); obj.hp = h.hp; return obj;
-        });
-        GameState.enemies = (saved.enemies || []).map(e => {
-            let obj = new Enemy(e.x, e.y, 1); obj.hp = e.hp; obj.maxHp = e.maxHp; return obj;
-        });
+        GameState.buildings = (saved.buildings || []).map(b => { let obj = new Building(b.gridX, b.gridY, b.type); obj.hp = b.hp; obj.maxHp = b.maxHp; return obj; });
+        GameState.villagers = (saved.villagers || []).map(v => { let obj = new Villager(v.x, v.y); obj.hp = v.hp; obj.state = v.state; return obj; });
+        GameState.soldiers = (saved.soldiers || []).map(s => { let obj = new Soldier(s.x, s.y); obj.hp = s.hp; return obj; });
+        GameState.elephants = (saved.elephants || []).map(e => { let obj = new Elephant(e.x, e.y); obj.hp = e.hp; return obj; });
+        GameState.horses = (saved.horses || []).map(h => { let obj = new Horse(h.x, h.y); obj.hp = h.hp; return obj; });
+        GameState.enemies = (saved.enemies || []).map(e => { let obj = new Enemy(e.x, e.y, 1); obj.hp = e.hp; obj.maxHp = e.maxHp; return obj; });
 
         updateDOM();
         console.log("Game Loaded Successfully!");
-    } catch (e) {
-        console.error("Save file corrupted. Starting new game.", e);
-    }
+    } catch (e) { console.error("Save file corrupted. Starting new game.", e); }
 }
 
-// Tab එක close කරද්දී හරි Refresh කරද්දී හරි Save කරන්න
 window.addEventListener('beforeunload', saveGame);
-
-// Mobile Phone එකේ වෙන App එකකට යද්දී (minimize කරද්දී) Save කරන්න
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') saveGame();
-});
-
-// තත්පර 10න් 10ට ඉබේම Auto-save වෙන්න
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(); });
 setInterval(saveGame, 10000);
-
-// ගේම් එක මුලින්ම පටන් ගනිද්දී Save කරපු එකක් තියෙනවද බලලා ලෝඩ් කරන්න
 loadGame();
-
-// ==========================================
 
 function gameLoop() { drawGame(); requestAnimationFrame(gameLoop); }
 gameLoop();
 
-// --- Landing page එකෙන් එද්දී Settings auto-open කරන කෝඩ් එක ---
 window.addEventListener('DOMContentLoaded', () => {
-    // URL එකේ අගට ?action=settings කියලා තියෙනවද බලනවා
     const urlParams = new URLSearchParams(window.location.search);
     const action = urlParams.get('action');
-
     if (action === 'settings') {
-        // ගේම් එක ලෝඩ් වෙන්න පොඩි වෙලාවක් දීලා Settings Button එක Auto ඔබනවා
         setTimeout(() => {
             const settingsBtn = document.getElementById('btn-settings');
-            if (settingsBtn) {
-                settingsBtn.click(); 
-            }
+            if (settingsBtn) { settingsBtn.click(); }
         }, 100);
     }
+});
+
+// ==========================================
+// --- LANDING PAGE SCRIPTS ---
+// ==========================================
+(function(){
+    const c = document.getElementById('grain');
+    if(!c) return;
+    const ctx = c.getContext('2d');
+    function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
+    resize(); window.addEventListener('resize', resize);
+    let frame = 0;
+    function drawGrain(){
+        const w = c.width, h = c.height; const img = ctx.createImageData(w, h); const d = img.data;
+        for(let i = 0; i < d.length; i += 4){ const v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 28; }
+        ctx.putImageData(img, 0, 0); frame++;
+        if(frame % 3 === 0) requestAnimationFrame(drawGrain); else requestAnimationFrame(drawGrain);
+    }
+    drawGrain();
+})();
+
+document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        btn.style.transition = 'none'; btn.style.transform  = 'translateY(3px) scale(.97)';
+        setTimeout(() => { btn.style.transition = ''; btn.style.transform  = ''; }, 130);
+    });
+});
+
+function checkPortraitWarning() {
+    let warning = document.getElementById('portrait-warning');
+    if (warning) {
+        if (window.innerHeight > window.innerWidth && /Mobi|Android/i.test(navigator.userAgent)) { warning.style.display = 'flex'; } 
+        else { warning.style.display = 'none'; }
+    }
+}
+window.addEventListener('resize', checkPortraitWarning);
+
+document.getElementById('btn-play')?.addEventListener('click', () => {
+    let docEl = document.documentElement;
+    let requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+    
+    const landingWrapper = document.getElementById('landing-wrapper');
+    if(landingWrapper) {
+        landingWrapper.style.opacity = '0';
+        setTimeout(() => { landingWrapper.style.display = 'none'; }, 500); 
+    }
+
+    if(requestFS) {
+        requestFS.call(docEl).then(() => {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(e => { checkPortraitWarning(); });
+            } else { checkPortraitWarning(); }
+        }).catch(err => { checkPortraitWarning(); });
+    } else { checkPortraitWarning(); }
+});
+
+document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+    let docEl = document.documentElement;
+    let requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
+    if(requestFS) requestFS.call(docEl).catch(err => console.log("FS Error", err));
+
+    const landingWrapper = document.getElementById('landing-wrapper');
+    if(landingWrapper) {
+        landingWrapper.style.opacity = '0';
+        setTimeout(() => {
+            landingWrapper.style.display = 'none';
+            let gameSettingsBtn = document.getElementById('btn-settings');
+            if (gameSettingsBtn) gameSettingsBtn.click();
+        }, 500);
+    }
+});
+
+document.getElementById('btn-exit')?.addEventListener('click', () => { if(confirm("Are you sure you want to exit?")) { window.close(); } });
+
+window.addEventListener('DOMContentLoaded', () => {
+    let savedScore = localStorage.getItem('apexLionHighScore');
+    let bestLvl = document.getElementById('best-level-text');
+    if(bestLvl) bestLvl.innerText = savedScore ? savedScore : '0';
+});
+
+// ==========================================
+// --- PREVENT BROWSER DEFAULT ZOOM ON MOBILE ---
+// ==========================================
+
+// ඇඟිලි දෙකෙන් Pinch කරද්දි මුළු page එකම zoom වෙන එක නවත්වන්න
+document.addEventListener('touchmove', function (e) {
+    if (e.touches.length > 1) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// ඩබල් ටැප් (Double-tap) කරද්දි page එක zoom වෙන එක නවත්වන්න
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (e) {
+    let now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+    }
+    lastTouchEnd = now;
+}, { passive: false });
+
+// Gesture events (විශේෂයෙන් iOS Safari වල එන) නවත්වන්න
+document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+});
+document.addEventListener('gesturechange', function (e) {
+    e.preventDefault();
+});
+document.addEventListener('gestureend', function (e) {
+    e.preventDefault();
 });
