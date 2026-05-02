@@ -229,5 +229,5 @@ canvas:active { cursor: grabbing; }
 .bounce-active {
     animation: bounceUpgrade 1.2s infinite ease-in-out !important;
     border: 2px solid #FFD700 !important;
-    z-index: 10; /* Button එක අනිත් ඒවට වඩා උඩින් පේන්න */
+    z-index: 10; 
 }
