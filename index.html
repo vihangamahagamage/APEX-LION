@@ -6,202 +6,15 @@
     <title>APEX-LION – The Legend of Hela Warriors</title>
     <link rel="icon" type="image/svg" href="Assets/logo.svg">
     
-    <!-- Fonts for both Landing Page & Game -->
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Game CSS -->
-    <link rel="stylesheet" href="style.css?v=6">
-
-    <!-- Landing Page CSS -->
-    <style>
-      *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-    
-      :root {
-        --gold-bright:   #FFD966;
-        --gold-mid:      #C8932A;
-        --gold-dark:     #7A4F00;
-        --gold-shine:    #FFF5B0;
-        --wood-light:    #C4895A;
-        --wood-mid:      #8B5E3C;
-        --wood-dark:     #5C3A1E;
-        --wood-border:   #D4A76A;
-        --text-gold:     #F0C84A;
-        --btn-glow:      rgba(255, 200, 60, 0.55);
-      }
-    
-      html, body {
-        width: 100%; height: 100%;
-        overflow: hidden;
-      }
-      
-      /* --- LANDING PAGE WRAPPER --- */
-      #landing-wrapper {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw; height: 100vh;
-        z-index: 999999; /* ගේම් එකට වඩා ගොඩක් උඩින් තියෙන්නේ */
-        background: #1E1A10;
-        transition: opacity 0.5s ease; /* ලස්සනට fade වෙලා යන්න */
-        font-family: 'Cinzel', serif;
-      }
-    
-      /* ── BACKGROUND SCENE ── */
-      .scene {
-        position: absolute; inset: 0;
-        background-image: url('Assets/landingpagebg.svg'); 
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        z-index: 1;
-      }
-    
-      /* ── CANVAS OVERLAY (painted texture) ── */
-      canvas#grain {
-        position: absolute; inset: 0;
-        width: 100%; height: 100%;
-        pointer-events: none;
-        opacity: .18;
-        mix-blend-mode: overlay;
-        z-index: 2;
-      }
-    
-      /* ── MAIN UI ── */
-      .ui {
-        position: relative; z-index: 10;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        gap: 0;
-        padding: 0 20px;
-      }
-    
-      /* ── TITLE ── */
-      .title-wrap {
-        margin-bottom: 6px;
-        animation: titleDrop .9s cubic-bezier(.22,1,.36,1) both;
-      }
-      @keyframes titleDrop {
-        from { opacity: 0; transform: translateY(-40px) scale(.92); }
-        to   { opacity: 1; transform: translateY(0)    scale(1); }
-      }
-    
-      .game-title {
-        font-family: 'Cinzel Decorative', serif;
-        font-weight: 900;
-        font-size: clamp(52px, 9vw, 130px);
-        letter-spacing: .04em;
-        line-height: 1;
-    
-        background: linear-gradient(180deg, #FFF8C0 0%, #FFD966 18%, #C8932A 42%, #8B5E00 60%, #C8932A 78%, #FFD966 92%, #FFF0A0 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    
-        filter: drop-shadow(0 6px 0px #5A3800) drop-shadow(0 12px 24px rgba(0,0,0,.7)) drop-shadow(0 0 60px rgba(200,140,0,.4));
-        text-shadow: none;
-      }
-    
-      .game-title span { position: relative; }
-    
-      .subtitle {
-        font-family: 'Cinzel', serif;
-        font-weight: 600;
-        font-size: clamp(14px, 2.2vw, 28px);
-        letter-spacing: .18em;
-        text-transform: none;
-        color: var(--text-gold);
-        text-align: center;
-        margin-top: 6px;
-        filter: drop-shadow(0 2px 8px rgba(0,0,0,.8));
-        animation: fadeUp .8s .3s both;
-      }
-      @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(14px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-    
-      /* ── BUTTONS ── */
-      .btn-group {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 16px;
-        margin-top: 40px;
-      }
-    
-      .btn {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        width: clamp(240px, 34vw, 380px);
-        padding: 16px 36px;
-        border: none;
-        border-radius: 14px;
-        cursor: pointer;
-        overflow: visible;
-        font-family: 'Cinzel', serif;
-        font-weight: 700;
-        font-size: clamp(14px, 2vw, 20px);
-        letter-spacing: .22em;
-        color: #FFE9B0;
-        text-shadow: 0 1px 3px rgba(0,0,0,.8);
-        transition: transform .15s, filter .15s;
-        animation: fadeUp .7s both;
-        outline: none;
-    
-        background: repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0px, rgba(255,255,255,.03) 2px, transparent 2px, transparent 6px), linear-gradient(180deg, #C4895A 0%, #9B6130 25%, #7A4A1F 50%, #9B6130 75%, #C4895A 100%);
-        box-shadow: 0 0 0 2px #D4A76A, 0 0 0 4px #7A4000, 0 6px 0 #4A2800, 0 8px 20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,130,.3), inset 0 -1px 0 rgba(0,0,0,.4);
-      }
-    
-      .btn-primary {
-        background: repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0px, rgba(255,255,255,.04) 2px, transparent 2px, transparent 6px), linear-gradient(180deg, #D4A050 0%, #AA7020 25%, #855010 50%, #AA7020 75%, #D4A050 100%);
-        box-shadow: 0 0 0 2.5px #FFD966, 0 0 0 5px #8B5E00, 0 6px 0 #4A3000, 0 8px 30px rgba(0,0,0,.65), 0 0 40px rgba(255,200,60,.25), inset 0 1px 0 rgba(255,240,150,.4), inset 0 -1px 0 rgba(0,0,0,.4);
-        color: #FFF5C8;
-        animation-delay: .45s;
-      }
-      .btn:nth-child(2) { animation-delay: .55s; }
-      .btn:nth-child(3) { animation-delay: .65s; }
-    
-      .btn:hover {
-        transform: translateY(-3px) scale(1.03);
-        filter: brightness(1.15) drop-shadow(0 6px 24px var(--btn-glow));
-      }
-      .btn:active {
-        transform: translateY(2px) scale(.98);
-        filter: brightness(.92);
-      }
-    
-      .btn-icon { font-size: 1.2em; line-height: 1; flex-shrink: 0; }
-    
-      /* ── DECORATIVE DIVIDER ── */
-      .divider {
-        width: clamp(160px, 22vw, 280px); height: 2px; margin: 20px 0 0;
-        background: linear-gradient(90deg, transparent, var(--gold-mid), transparent); opacity: .6; animation: fadeUp .6s .2s both;
-      }
-      
-      @media screen and (max-width: 768px) {
-        .game-title { font-size: clamp(35px, 10vw, 50px); letter-spacing: 0.02em; }
-        .subtitle { font-size: clamp(12px, 3.5vw, 16px); letter-spacing: 0.1em; margin-top: 10px; }
-        .divider { margin: 15px 0 0; width: 80vw; }
-        .btn-group { margin-top: 25px; gap: 12px; }
-        .btn { width: 85vw; max-width: 280px; padding: 12px 20px; font-size: 14px; letter-spacing: 0.15em; }
-      }
-    
-      @media screen and (max-height: 500px) and (orientation: landscape) {
-        .ui { transform: scale(0.65); transform-origin: center center; }
-        html, body { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-      }
-    </style>
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- ============================================== -->
-    <!-- LANDING PAGE OVERLAY (සම්පූර්ණ ගේම් එකට උඩින් පේනවා) -->
-    <!-- ============================================== -->
+    <!-- LANDING PAGE OVERLAY -->
     <div id="landing-wrapper">
         <div class="scene"></div>
         <canvas id="grain"></canvas>
@@ -212,7 +25,7 @@
             <div class="subtitle">The Legend of Hela Warriors</div>
             <div class="divider"></div>
             
-            <div id="high-score-display" style="color: #FFD700; margin-top: 15px; font-family: 'Cinzel', serif; font-size: 18px; text-shadow: 0 2px 5px black; text-align: center;">
+            <div id="high-score-display" class="high-score-display">
                 🏆 Best Record: Level <span id="best-level-text">0</span>
             </div>
             
@@ -230,13 +43,10 @@
         </div>
     </div>
 
-
-    <!-- ============================================== -->
-    <!-- GAME UI & CANVAS (මේ ටික පිටිපස්සේ ලෝඩ් වෙනවා) -->
-    <!-- ============================================== -->
+    <!-- GAME UI & CANVAS -->
     <div id="loading-screen">
         <div class="loading-box">
-            <h1 style="font-family: 'Poppins', sans-serif; color: #D4AF37; margin-bottom: 20px;">Loading Assets...</h1>
+            <h1 class="loading-title">Loading Assets...</h1>
             <div class="progress-bar-container">
                 <div id="progress-bar"></div>
             </div>
@@ -261,7 +71,7 @@
                     <span id="gold-count" class="val">1000</span>
                 </div>
             </div>
-            <div class="divider-game" style="width:2px; height:30px; background:rgba(212,175,55,0.3); margin:0 10px;"></div>
+            <div class="divider-game divider-styled"></div>
             <div class="resource">
                 <span class="icon rice-icon">🌾</span>
                 <div class="res-col">
@@ -270,9 +80,7 @@
                 </div>
             </div>
         </div>
-        <div id="pan-btn" class="premium-panel">
-            🗺️ PAN MAP TO EXPLORE
-        </div>
+        <div id="pan-btn" class="premium-panel">🗺️ PAN MAP TO EXPLORE</div>
         <div id="system-message"></div>
     </div>
 
@@ -284,121 +92,91 @@
         <button id="btn-zoom-out" class="icon-btn premium-panel">➖</button>
     </div>
 
+    <!-- Level Status Container -->
+    <div id="level-status-container" class="level-status-container">
+        <div id="level-status-text" class="level-status-text"></div>
+        <button id="btn-early-wave" class="btn-early-wave"></button>
+    </div>
+
+    <!-- Royal Advisor Panel -->
+    <div id="ai-guide-panel" class="ai-guide-panel">
+        <div class="ai-header">
+            <span class="ai-icon">👑</span><br>
+            <span class="ai-title">ROYAL ADVISOR</span>
+            <hr class="ai-divider">
+        </div>
+        <div id="ai-chat-text" class="ai-chat-text"></div>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <div id="bottom-dock-wrapper">
+        <button id="panel-toggle-btn" class="panel-toggle-btn">▼</button>
         <div id="ui-bottom" class="premium-panel"></div>
     </div>
 
-    <!-- ============================================== -->
-    <!-- SCRIPTS -->
-    <!-- ============================================== -->
-    <script>
-        /* --- Landing Page Scripts (Grain Effect & Clicks) --- */
-        (function(){
-            const c = document.getElementById('grain');
-            if(!c) return;
-            const ctx = c.getContext('2d');
-            function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
-            resize(); window.addEventListener('resize', resize);
-            let frame = 0;
-            function drawGrain(){
-                const w = c.width, h = c.height; const img = ctx.createImageData(w, h); const d = img.data;
-                for(let i = 0; i < d.length; i += 4){
-                    const v = (Math.random() * 255) | 0; d[i] = d[i+1] = d[i+2] = v; d[i+3] = 28;
-                }
-                ctx.putImageData(img, 0, 0); frame++;
-                if(frame % 3 === 0) requestAnimationFrame(drawGrain); else requestAnimationFrame(drawGrain);
-            }
-            drawGrain();
-        })();
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal">
+        <h2 class="settings-title">⚙️ Game Settings</h2>
+        
+        <div class="settings-row">
+            <label class="settings-label">Music Volume: <span id="bgm-vol-text">30%</span></label>
+            <input type="range" id="bgm-slider" min="0" max="100" value="30" class="settings-slider">
+        </div>
 
-        document.querySelectorAll('.btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.style.transition = 'none'; btn.style.transform  = 'translateY(3px) scale(.97)';
-                setTimeout(() => { btn.style.transition = ''; btn.style.transform  = ''; }, 130);
-            });
-        });
+        <div class="settings-row">
+            <label class="settings-label">Effects Volume: <span id="sfx-vol-text">80%</span></label>
+            <input type="range" id="sfx-slider" min="0" max="100" value="80" class="settings-slider">
+        </div>
 
-        // --- Mobile Portrait Warning Logic ---
-        function checkPortraitWarning() {
-            let warning = document.getElementById('portrait-warning');
-            if (warning) {
-                // ෆෝන් එකක්ද සහ කෙලින් අතටද තියෙන්නේ කියලා බලනවා
-                if (window.innerHeight > window.innerWidth && /Mobi|Android/i.test(navigator.userAgent)) {
-                    warning.style.display = 'flex'; // මැසේජ් එක පෙන්නනවා
-                } else {
-                    warning.style.display = 'none'; // හරස් අතට හරවපු ගමන් මැසේජ් එක හංගනවා
-                }
-            }
-        }
+        <div class="settings-row">
+            <label class="settings-label settings-inline-label">Select Land:</label>
+            <select id="land-select" class="settings-select">
+                <option value="land1" selected>Land 1</option>
+                <option value="land2">Land 2</option>
+                <option value="land3">Land 3</option>
+            </select>
+        </div>
 
-        // ප්ලේයර් ෆෝන් එක හරවද්දි මේක ඉබේම චෙක් වෙනවා
-        window.addEventListener('resize', checkPortraitWarning);
+        <div class="settings-row">
+            <label class="settings-label settings-inline-label">Difficulty:</label>
+            <select id="difficulty-select" class="settings-select">
+                <option value="easy">Easy (Less Enemies, Less Rewards)</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Hard (More Enemies, More Rewards)</option>
+            </select>
+        </div>
+        
+        <div class="settings-center-row">
+            <button id="btn-force-restart" class="btn-force-restart">⚠️ RESTART GAME</button>
+        </div>
+        
+        <button id="btn-close-settings" class="btn-close-settings">Save & Close</button>
+    </div>
 
-        // 1. PLAY GAME එබුවම - Fullscreen & Auto-Rotate යන්න Try කරනවා!
-        document.getElementById('btn-play').addEventListener('click', () => {
-            let docEl = document.documentElement;
-            let requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-            
-            // Landing පිටුව ලස්සනට හංගනවා
-            const landingWrapper = document.getElementById('landing-wrapper');
-            landingWrapper.style.opacity = '0';
-            setTimeout(() => {
-                landingWrapper.style.display = 'none';
-            }, 500); 
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="pause-overlay">
+        <h1 class="pause-title">PAUSED</h1>
+        <button id="btn-resume-game" class="btn-resume-game">▶ RESUME</button>
+    </div>
 
-            if(requestFS) {
-                // Fullscreen එකට යනවා
-                requestFS.call(docEl).then(() => {
-                    // ගිය ගමන් ඉබේම ෆෝන් එක හරස් අතට (landscape) හරවලා lock කරන්න Try කරනවා
-                    if (screen.orientation && screen.orientation.lock) {
-                        screen.orientation.lock('landscape').catch(e => {
-                            console.log("Orientation lock failed:", e);
-                            checkPortraitWarning(); // ඉඩ දුන්නේ නැත්නම් Warning එක පෙන්නනවා
-                        });
-                    } else {
-                        checkPortraitWarning(); // Lock කරන්න බැරි බ්‍රවුසර් එකක් නම් Warning එක පෙන්නනවා
-                    }
-                }).catch(err => {
-                    console.log("FS Error", err);
-                    checkPortraitWarning(); // Fullscreen යන්න දුන්නෙත් නැත්නම් Warning එක පෙන්නනවා
-                });
-            } else {
-                checkPortraitWarning(); // Safari වගේ Fullscreen Support නැති එකක් නම් කෙලින්ම Warning එක පෙන්නනවා
-            }
-        });
+    <!-- Game Over Popup -->
+    <div id="game-over-popup" class="game-over-popup">
+        <h1 class="game-over-title">💀 GAME OVER 💀</h1>
+        <p class="game-over-desc">Your base has been destroyed!</p>
+        <p id="game-over-level-text" class="game-over-level-text"></p>
+        <button id="btn-restart-game" class="btn-restart-game">🔄 RESTART GAME</button>
+    </div>
 
-        // 2. SETTINGS එබුවම - ගේම් එකේ තියෙන Settings මෙනු එක ලෝඩ් කරනවා
-        document.getElementById('btn-open-settings').addEventListener('click', () => {
-            let docEl = document.documentElement;
-            let requestFS = docEl.requestFullscreen || docEl.webkitRequestFullScreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
-            if(requestFS) requestFS.call(docEl).catch(err => console.log("FS Error", err));
+    <!-- Level Cleared Popup -->
+    <div id="level-popup" class="level-popup">
+        <h2 id="level-popup-title" class="level-popup-title"></h2>
+        <p class="level-popup-desc">You have successfully defended the kingdom!</p>
+        <p id="level-popup-reward" class="level-popup-reward"></p>
+        <p class="level-popup-footer">Starting next level automatically...</p>
+    </div>
 
-            const landingWrapper = document.getElementById('landing-wrapper');
-            landingWrapper.style.opacity = '0';
-            setTimeout(() => {
-                landingWrapper.style.display = 'none';
-                
-                // Trigger the Game's setting button directly
-                let gameSettingsBtn = document.getElementById('btn-settings');
-                if (gameSettingsBtn) gameSettingsBtn.click();
-            }, 500);
-        });
-
-        // 3. EXIT
-        document.getElementById('btn-exit').addEventListener('click', () => {
-            if(confirm("Are you sure you want to exit?")) { window.close(); }
-        });
-
-        // High Score
-        window.addEventListener('DOMContentLoaded', () => {
-            let savedScore = localStorage.getItem('apexLionHighScore');
-            document.getElementById('best-level-text').innerText = savedScore ? savedScore : '0';
-        });
-    </script>
-
-    <!-- Game Engine Logic -->
-    <script src="game.js?v=6"></script>
+    <!-- Game Scripts -->
+    <script src="game.js"></script>
 </body>
 </html>
