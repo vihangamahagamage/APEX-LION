@@ -181,3 +181,15 @@ canvas:active { cursor: grabbing; }
     #level-status-container { transform: translateX(-50%) scale(0.55) !important; top: 5px !important; }
     #ai-guide-panel, #btn-zoom-in, #btn-zoom-out { display: none !important; }
 }
+
+/* --- Palace Upgrade Bounce Animation --- */
+@keyframes bounceUpgrade {
+    0%, 100% { transform: translateY(0); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    50% { transform: translateY(-8px); box-shadow: 0 15px 25px rgba(212, 175, 55, 0.8); }
+}
+
+.bounce-active {
+    animation: bounceUpgrade 1.2s infinite ease-in-out !important;
+    border: 2px solid #FFD700 !important;
+    z-index: 10; /* Button එක අනිත් ඒවට වඩා උඩින් පේන්න */
+}
