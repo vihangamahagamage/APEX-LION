@@ -8,6 +8,8 @@ const imagePaths = {
     tree: "", 
     lotus: "",
     palace: "Assets/casel.svg", 
+    palace2: "Assets/casel2.svg", 
+    palace3: "Assets/casel3.svg", 
     barracks: "Assets/barracks.svg",
     elephantPen: "Assets/elephantpen.svg",
     stables: "Assets/stables.svg",
@@ -404,7 +406,16 @@ class Building {
 	//can change the size of assets in places where they are available here
 	
     draw(ctx, screenX, screenY) {
-        const img = images[this.imgKey];
+        let currentImgKey = this.imgKey;
+		
+		// Palace එකේ Level එක අනුව පින්තූරය මාරු කිරීම
+        if (this.type === 'Palace') {
+            if (GameState.palaceLevel === 2) currentImgKey = 'palace2';
+            else if (GameState.palaceLevel >= 3) currentImgKey = 'palace3'; // Level 3 න් පස්සේ දිගටම මේක පේනවා
+        }
+
+        const img = images[currentImgKey];
+		
         if (imagePaths[this.imgKey] && img && img.complete && img.naturalWidth > 0) {
 			
 			let imageScale = 1.0;
@@ -913,7 +924,7 @@ function showRoyalAdvisor(messages) {
     if (!aiPanel) {
         aiPanel = document.createElement('div');
         aiPanel.id = 'ai-guide-panel';
-        aiPanel.style.cssText = "position:absolute; top:130px; left:15px; width:280px; background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:8px; padding:20px; color:var(--text-main); font-family:var(--font-body); z-index:20; box-shadow:0 8px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(212,175,55,0.1); pointer-events:none; transition: opacity 0.5s ease;";
+        aiPanel.style.cssText = "position:absolute; top:200px; left:15px; width:280px; background:var(--bg-panel); border:1px solid var(--gold-primary); border-radius:8px; padding:20px; color:var(--text-main); font-family:var(--font-body); z-index:20; box-shadow:0 8px 25px rgba(0,0,0,0.8), inset 0 0 15px rgba(212,175,55,0.1); pointer-events:none; transition: opacity 0.5s ease;";
         
         const aiHeader = document.createElement('div');
         aiHeader.innerHTML = '<div style="text-align:center; width:100%;"><span style="font-size:24px;">👑</span><br><span style="font-family:var(--font-heading); font-weight:700; color:var(--gold-primary); letter-spacing:1px; font-size:16px;">ROYAL ADVISOR</span><hr style="border:0; height:1px; background: linear-gradient(to right, transparent, var(--gold-primary), transparent); margin:12px 0;"></div>';
@@ -1154,7 +1165,7 @@ function setupUIButtons() {
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-stables', 'Stables', 200, 0));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-wall', 'Wall', 0, 50));
         uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-tower', 'Tower', 100, 50));
-        uiBottom.insertAdjacentHTML('beforeend', getBtnHTML('btn-upgrade', 'Upgrade Palace', 500, 0, 'upgrade-btn'));
+        
         uiBottom.insertAdjacentHTML('beforeend', `<button id="btn-cancel" class="build-btn hidden">CANCEL</button>`);
     }
 
@@ -1228,6 +1239,7 @@ function setupUIButtons() {
 
 window.addEventListener('DOMContentLoaded', () => {
     setupUIButtons();
+	updateDOM();
 
     // --- PAUSE, SETTINGS & FULLSCREEN UI INJECTION ---
     const btnSettings = document.getElementById('btn-settings');
@@ -1409,7 +1421,64 @@ window.addEventListener('DOMContentLoaded', () => {
     ]);
 });
 
-function updateDOM() { if(uiGold) uiGold.innerText = GameState.gold; if(uiRice) uiRice.innerText = GameState.rice; }
+function updateDOM() { 
+    if(uiGold) uiGold.innerText = GameState.gold; 
+    if(uiRice) uiRice.innerText = GameState.rice; 
+
+    // --- Advanced Palace Button Logic with Bounce Animation ---
+    const palaceBtn = document.getElementById('btn-palace');
+    if (palaceBtn) {
+        let hasPalace = GameState.buildings.some(b => b.type === 'Palace');
+        let titleSpan = palaceBtn.querySelector('.btn-title');
+        let costDiv = palaceBtn.querySelector('.btn-cost');
+        
+        if (hasPalace) {
+            let nextImg = GameState.palaceLevel === 1 ? imagePaths.palace2 : imagePaths.palace3;
+            
+            if (GameState.level > GameState.palaceLevel && GameState.palaceLevel < 3) {
+                // Upgrade කරන්න පුළුවන් වෙලාව 
+                palaceBtn.style.opacity = '1'; 
+                palaceBtn.style.pointerEvents = 'auto'; 
+                palaceBtn.style.filter = 'none'; 
+                palaceBtn.classList.add('bounce-active'); // <--- Animation එක දානවා
+                
+                if (titleSpan) titleSpan.innerText = 'UPGRADE';
+                if (costDiv) costDiv.innerHTML = '<span class="icon">🪙</span> 500 G';
+                if (nextImg) palaceBtn.style.backgroundImage = `url("${nextImg}")`; 
+            } else {
+                // Upgrade කරන්න බැරි වෙලාව (Locked)
+                palaceBtn.style.opacity = '0.4'; 
+                palaceBtn.style.pointerEvents = 'none'; 
+                palaceBtn.style.filter = 'grayscale(100%)'; 
+                palaceBtn.classList.remove('bounce-active'); // <--- Animation එක අයින් කරනවා
+                
+                if (GameState.palaceLevel < 3) {
+                    if (titleSpan) titleSpan.innerText = 'LOCKED';
+                    if (costDiv) costDiv.innerHTML = '<span class="icon">🪙</span> 500 G';
+                    if (nextImg) palaceBtn.style.backgroundImage = `url("${nextImg}")`; 
+                } else {
+                    // Level 3 (උපරිම) ආවම
+                    if (titleSpan) titleSpan.innerText = 'MAX LEVEL';
+                    if (costDiv) costDiv.innerHTML = '';
+                    if (imagePaths.palace3) palaceBtn.style.backgroundImage = `url("${imagePaths.palace3}")`;
+                }
+            }
+        } else {
+            // තාම මාලිගාවක් හදලා නැත්නම් (මුලින්ම හදන වෙලාව)
+            palaceBtn.style.opacity = '1';
+            palaceBtn.style.pointerEvents = 'auto';
+            palaceBtn.style.filter = 'none';
+            palaceBtn.classList.remove('bounce-active'); // <--- Animation එක අයින් කරනවා
+            
+            if (titleSpan) titleSpan.innerText = 'PALACE';
+            if (costDiv) costDiv.innerHTML = '<span class="icon">🪙</span> 200 G';
+            
+            let svgData = svgs.palaceIcon ? `url('data:image/svg+xml;utf8,${encodeURIComponent(svgs.palaceIcon.replace('data:image/svg+xml;utf8,', ''))}')` : '';
+            palaceBtn.style.backgroundImage = imagePaths.palace ? `url("${imagePaths.palace}"), ${svgData}` : svgData;
+        }
+    }
+}
+
 function showMessage(msg, isError = false) { 
     if(uiMessage) { 
         uiMessage.innerText = msg; 
@@ -1442,12 +1511,26 @@ document.body.addEventListener('click', (e) => {
     if (e.target.closest('.build-btn')) {
         const btn = e.target.closest('.build-btn');
         if (btn.id === 'btn-cancel') { cancelPlacement(); return; }
-        if (btn.id === 'btn-upgrade') {
-            if (GameState.isPaused) return;
+        // Palace බට්න් එක එබුවම
+        if (btn.id === 'btn-palace') {
             let palace = GameState.buildings.find(b => b.type === 'Palace');
-            if (!palace) return showMessage("Build a Palace first!", true);
-            if (GameState.gold >= 500) { GameState.gold -= 500; GameState.palaceLevel++; palace.maxHp += 2000; palace.hp = palace.maxHp; updateDOM(); showMessage(`Palace Upgraded to Level ${GameState.palaceLevel}!`); GameState.floatingTexts.push(new FloatingText(palace.gridX+1, palace.gridY+1, `LEVEL UP!`, '#FFD700')); } 
-            else { showMessage("Need 500 Gold to upgrade!", true); } return;
+            if (palace) {
+                // මාලිගාවක් දැනටමත් තියෙනවා නම් මේකෙන් වෙන්නේ Upgrade කරන එකයි
+                if (GameState.isPaused) return;
+                if (GameState.gold >= 500) { 
+                    GameState.gold -= 500; 
+                    GameState.palaceLevel++; 
+                    palace.maxHp += 2000; 
+                    palace.hp = palace.maxHp; 
+                    updateDOM(); 
+                    playSound('build'); // Upgrade වෙද්දිත් සද්දේ එන්න
+                    showMessage(`Palace Upgraded to Level ${GameState.palaceLevel}!`); 
+                    GameState.floatingTexts.push(new FloatingText(palace.gridX+1, palace.gridY+1, `LEVEL UP!`, '#FFD700')); 
+                } else { 
+                    showMessage("Need 500 Gold to upgrade!", true); 
+                } 
+                return; // Placement mode එකට යන එක නවත්වනවා
+            }
         }
         setPlacementMode(btn.dataset.type, parseInt(btn.dataset.costGold), parseInt(btn.dataset.costRice));
     }
@@ -1617,6 +1700,10 @@ canvas.addEventListener('click', (e) => {
     }
     const { gridX: gx, gridY: gy } = mouse;
     const { type, goldCost, riceCost, size } = GameState.selectedBuilding;
+	
+	if (type === 'Palace' && GameState.buildings.some(b => b.type === 'Palace')) {
+        return showMessage("Your Majesty, a kingdom can only have one Palace!", true);
+    }
     
     let isBlocked = false;
     for(let dx=0; dx<size; dx++) for(let dy=0; dy<size; dy++) if (isTileBlocked(gx+dx, gy+dy, null)) isBlocked = true;
