@@ -172,14 +172,52 @@ canvas:active { cursor: grabbing; }
     #level-status-container { transform: translateX(-50%) scale(0.6) !important; top: 10px !important; }
 }
 
-/* Very Narrow Landscape Phones */
+/* Very Narrow Landscape Phones & Responsive Fixes */
 @media screen and (max-height: 500px) and (orientation: landscape) {
-    #bottom-dock-wrapper { transform: translateX(-50%) scale(0.65); }
+    /* Main Containers */
+    #top-left-container, #top-right-container {
+        transform: scale(0.75);
+        transform-origin: top left;
+        padding: 5px;
+    }
+
+    #top-right-container {
+        transform-origin: top right;
+    }
+
+    #bottom-dock-wrapper { 
+        transform: translateX(-50%) scale(0.7); 
+        transform-origin: bottom center; 
+        bottom: 5px; 
+    }
     #bottom-dock-wrapper.dock-hidden { bottom: -90px !important; }
-    #top-left-container { transform: scale(0.65); }
-    #top-right-container { transform: scale(0.65); }
-    #level-status-container { transform: translateX(-50%) scale(0.55) !important; top: 5px !important; }
-    #ai-guide-panel, #btn-zoom-in, #btn-zoom-out { display: none !important; }
+
+    #level-status-container { 
+        transform: translateX(-50%) scale(0.65) !important; 
+        top: 5px !important; 
+    }
+
+    /* Hide unnecessary UI for more screen space */
+    #ai-guide-panel, #btn-zoom-in, #btn-zoom-out, #pan-btn { 
+        display: none !important; 
+    }
+
+    /* Resource Panel Adjustments */
+    .premium-panel { padding: 5px 10px !important; }
+    .resource .val { font-size: 13px !important; }
+    .resource .label { font-size: 9px !important; }
+    .resource .icon { font-size: 16px !important; }
+
+    /* Building Buttons Adjustments */
+    .build-btn {
+        width: 80px !important;
+        height: 100px !important;
+        padding: 5px !important;
+        background-size: 35px !important; /* Image size inside button */
+        background-position: center top 10px !important;
+    }
+    .build-btn .btn-title { font-size: 9px !important; margin-bottom: 2px !important; }
+    .btn-cost { font-size: 10px !important; }
 }
 
 /* --- Palace Upgrade Bounce Animation --- */
@@ -191,5 +229,5 @@ canvas:active { cursor: grabbing; }
 .bounce-active {
     animation: bounceUpgrade 1.2s infinite ease-in-out !important;
     border: 2px solid #FFD700 !important;
-    z-index: 10; /* Button එක අනිත් ඒවට වඩා උඩින් පේන්න */
+    z-index: 10; 
 }
