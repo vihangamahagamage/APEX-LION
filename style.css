@@ -677,7 +677,7 @@ canvas#gameCanvas:active {
   font-weight: 700;
 }
 
-/* Panel Toggle Button */
+/* Panel Toggle Button (Desktop view) */
 .panel-toggle-btn {
   position: absolute;
   top: -25px;
@@ -996,9 +996,10 @@ canvas#gameCanvas:active {
   }
   #bottom-dock-wrapper {
     transform: translateX(-50%) scale(0.7);
+    bottom: 10px !important;
   }
   #bottom-dock-wrapper.dock-hidden {
-    bottom: -100px !important;
+    bottom: -75px !important;
   }
   #top-left-container {
     transform: scale(0.7);
@@ -1101,4 +1102,113 @@ canvas#gameCanvas:active {
   animation: bounceUpgrade 1.2s infinite ease-in-out !important;
   border: 2px solid #ffd700 !important;
   z-index: 10;
+}
+
+/* ==========================================
+   POPUPS MOBILE RESPONSIVE FIXES
+   ========================================== */
+
+/* 1. General fix - Screen එකේ උසට වඩා ලොකු වෙන්න නොදීම සහ Scroll කිරීම */
+.settings-modal,
+.game-over-popup,
+.level-popup {
+  max-height: 85vh; /* Screen එකේ උසින් 85% කට වඩා ලොකු වෙන්න දෙන්නේ නෑ */
+  overflow-y: auto; /* ඊට වඩා ලොකු නම් ඇතුළෙදි Scroll වෙන්න දෙනවා */
+  width: 90vw; /* ෆෝන් එකේ පළලින් 90% ක් ගන්නවා */
+  max-width: 400px; /* හැබැයි Desktop එකේදී 400px වලට වඩා ලොකු වෙන්නේ නෑ */
+}
+
+/* Popups වලට ලස්සන Custom Scrollbar එකක් */
+.settings-modal::-webkit-scrollbar,
+.game-over-popup::-webkit-scrollbar,
+.level-popup::-webkit-scrollbar {
+  width: 6px;
+}
+.settings-modal::-webkit-scrollbar-thumb,
+.game-over-popup::-webkit-scrollbar-thumb,
+.level-popup::-webkit-scrollbar-thumb {
+  background: var(--gold-dark);
+  border-radius: 4px;
+}
+
+/* 2. Mobile Portrait View (ෆෝන් එක කෙලින් තියෙද්දි) Padding සහ Font size අඩු කිරීම */
+@media screen and (max-width: 768px) {
+  .game-over-popup {
+    padding: 25px 15px;
+  }
+  .game-over-title {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  .game-over-desc {
+    font-size: 16px;
+    margin: 5px 0;
+  }
+  .settings-modal {
+    padding: 20px 15px;
+  }
+  .settings-title {
+    font-size: 22px;
+    margin-bottom: 15px;
+  }
+  .settings-row {
+    margin-bottom: 10px;
+  }
+}
+
+/* 3. Mobile Landscape View (ෆෝන් එක හරහට තියෙද්දි - ඔයාගේ ෆොටෝ වල තියෙන අවුල) */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .settings-modal,
+  .game-over-popup,
+  .level-popup {
+    /* මෙතන scale(0.8) දාලා තියෙන්නේ මුළු Box එකම ගාණට පොඩි වෙන්න */
+    transform: translate(-50%, -50%) scale(0.8);
+    padding: 15px;
+  }
+  .game-over-title {
+    margin-bottom: 5px;
+  }
+  .settings-row {
+    margin-bottom: 8px;
+  }
+  .settings-center-row {
+    margin-bottom: 15px;
+  }
+  .btn-restart-game,
+  .btn-close-settings,
+  .btn-force-restart {
+    padding: 8px 20px;
+    font-size: 14px;
+  }
+}
+
+/* ==========================================
+   FORCE MOBILE TOGGLE BUTTON VISIBILITY
+   ========================================== */
+@media screen and (max-width: 768px) {
+  /* 1. අර Scale එක නිසා බට්න් එක පොඩි වෙන එක මගහැරලා ලොකු කිරීම */
+  .panel-toggle-btn {
+    top: -35px !important; /* ගොඩක්ම උඩට ඉස්සුවා */
+    padding: 10px 50px 18px 50px !important; /* ඇඟිල්ලට අහුවෙන්න සයිස් එක ගොඩක් ලොකු කළා */
+    font-size: 18px !important; /* ත්‍රිකෝණයේ සයිස් එකත් ලොකු කළා */
+    z-index: 99999 !important; /* වෙන කිසිම දේකට මේක වැහෙන්න බැරි වෙන්න හැදුවා */
+    background-color: var(--bg-panel) !important;
+    border: 2px solid var(--gold-primary) !important;
+  }
+
+  /* 2. පැනල් එක හැංගෙද්දී යන දුර සීමා කිරීම */
+  #bottom-dock-wrapper.dock-hidden {
+    bottom: -100px !important; /* ගොඩක් යටට යන්න දෙන්නේ නෑ */
+  }
+}
+
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  /* ෆෝන් එක හරහට (Landscape) තියෙද්දිත් බට්න් එක පේන්න ඕනේ නම් */
+  .panel-toggle-btn {
+    top: -35px !important;
+    padding: 5px 40px !important;
+  }
+  #bottom-dock-wrapper.dock-hidden {
+    bottom: -80px !important;
+  }
 }
