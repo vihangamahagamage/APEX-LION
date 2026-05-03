@@ -134,11 +134,14 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const mouse = { x: 0, y: 0, gridX: -1, gridY: -1 };
 
+// --- FIXED CAMERA CLAMPING & CENTERING (WITH HIGH-DPI SUPPORT) ---
+
 function updateZoomLimits() {
   if (!canvas) return;
   const mapW = (MAP_COLS + MAP_ROWS) * (TILE_W / 2) + 20;
   const mapH = (MAP_COLS + MAP_ROWS) * (TILE_H / 2) + ROCK_HEIGHT + 300;
-  MIN_ZOOM = Math.max(canvas.width / mapW, canvas.height / mapH);
+  // canvas.width වෙනුවට window.innerWidth පාවිච්චි කිරීම
+  MIN_ZOOM = Math.max(window.innerWidth / mapW, window.innerHeight / mapH);
   if (zoom < MIN_ZOOM) zoom = MIN_ZOOM;
 }
 
@@ -148,21 +151,22 @@ function clampCamera() {
   const mapRight = (MAP_COLS * TILE_W) / 2;
   const mapTop = -TILE_H * 2;
   const mapBottom = (MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ROCK_HEIGHT;
+
   const pad = 10;
-  let minCamX = canvas.width - mapRight * zoom - pad;
+  let minCamX = window.innerWidth - mapRight * zoom - pad;
   let maxCamX = -mapLeft * zoom + pad;
-  let minCamY = canvas.height - mapBottom * zoom - pad;
+  let minCamY = window.innerHeight - mapBottom * zoom - pad;
   let maxCamY = -mapTop * zoom + pad;
 
   if (minCamX > maxCamX) {
-    camera.x = canvas.width / 2;
+    camera.x = window.innerWidth / 2;
   } else {
     camera.x = Math.max(minCamX, Math.min(camera.x, maxCamX));
   }
 
   if (minCamY > maxCamY) {
     let mapCenterY = (mapTop + mapBottom) / 2;
-    camera.y = canvas.height / 2 - mapCenterY * zoom;
+    camera.y = window.innerHeight / 2 - mapCenterY * zoom;
   } else {
     camera.y = Math.max(minCamY, Math.min(camera.y, maxCamY));
   }
@@ -171,15 +175,24 @@ function clampCamera() {
 function centerCameraOnBase() {
   updateZoomLimits();
   let mapCenterY = ((MAP_ROWS + MAP_COLS) * (TILE_H / 2) + ROCK_HEIGHT) / 2;
-  camera.x = canvas.width / 2;
-  camera.y = canvas.height / 2 - mapCenterY * zoom;
+  camera.x = window.innerWidth / 2;
+  camera.y = window.innerHeight / 2 - mapCenterY * zoom;
   clampCamera();
 }
 
 function resizeCanvas() {
   if (!canvas) return;
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  // ෆෝන් එකේ Screen Pixel අනුපාතය (DPI) හොයාගැනීම
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  // Canvas එකේ ඇත්ත සයිස් එක Screen එකට සමාන කිරීම (CSS)
+  canvas.style.width = window.innerWidth + "px";
+  canvas.style.height = window.innerHeight + "px";
+
+  // Canvas එකේ ඇතුළේ Resolution එක ෆෝන් එකේ කොලිටි එකටම වැඩි කිරීම!
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+
   updateZoomLimits();
   if (camera.x === 0 && camera.y === 0) {
     zoom = MIN_ZOOM;
@@ -191,14 +204,21 @@ function resizeCanvas() {
 }
 window.addEventListener("resize", resizeCanvas);
 
-function doZoom(amount, focusX = canvas.width / 2, focusY = canvas.height / 2) {
+function doZoom(
+  amount,
+  focusX = window.innerWidth / 2,
+  focusY = window.innerHeight / 2,
+) {
   updateZoomLimits();
   let oldZoom = zoom;
   zoom += amount;
+
   if (zoom > MAX_ZOOM) zoom = MAX_ZOOM;
   if (zoom < MIN_ZOOM) zoom = MIN_ZOOM;
+
   let isoX = (focusX - camera.x) / oldZoom;
   let isoY = (focusY - camera.y) / oldZoom;
+
   camera.x = focusX - isoX * zoom;
   camera.y = focusY - isoY * zoom;
   clampCamera();
@@ -2400,10 +2420,21 @@ function drawSigiriyaRockBase() {
 
 function drawGame() {
   try {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
+
+    // High-DPI Screen වලට හරියන්න Canvas එක Scale කරනවා
+    ctx.scale(dpr, dpr);
+
+    // 🌟 Zoom out කරද්දී පින්තූර කැඩෙන එක නවත්වන ප්‍රධාන කෝඩ් එක (High Quality Smoothing) 🌟
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
     ctx.translate(camera.x, camera.y);
     ctx.scale(zoom, zoom);
+
     handleGameLogic();
 
     GameState.buildings = GameState.buildings.filter((b) => b.hp > 0);
