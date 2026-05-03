@@ -3065,3 +3065,98 @@ document.addEventListener("gesturechange", function (e) {
 document.addEventListener("gestureend", function (e) {
   e.preventDefault();
 });
+
+// ==========================================
+// --- DRAG & DROP FROM UI (Mobile & Desktop) ---
+// ==========================================
+
+let isDraggingFromPanel = false;
+let hasDraggedBuilding = false;
+let lastDragTime = 0;
+
+// 1. පැනල් එකේ බට්න් එක උඩ ඇඟිල්ල/මවුස් එක තියද්දිම ගොඩනැගිල්ල තෝරාගන්නවා
+window.addEventListener("mousedown", (e) => {
+  let btn = e.target.closest(".build-btn");
+  if (btn) {
+    btn.click(); // නිකන්ම ක්ලික් කරා වගේ තෝරාගන්නවා
+    isDraggingFromPanel = true;
+    hasDraggedBuilding = false;
+  }
+});
+
+window.addEventListener(
+  "touchstart",
+  (e) => {
+    let btn = e.target.closest(".build-btn");
+    if (btn) {
+      btn.click();
+      isDraggingFromPanel = true;
+      hasDraggedBuilding = false;
+    }
+  },
+  { passive: false },
+);
+
+// 2. ඇදගෙන යද්දී (Drag කරද්දී) Canvas එකේ තියෙන කොටුව හරියටම හොයාගන්නවා
+window.addEventListener("mousemove", (e) => {
+  if (isDraggingFromPanel && GameState.mode === "placement_mode") {
+    let now = Date.now();
+    if (now - lastDragTime < 15) return; // 🌟 පරතරය 15ms ට සීමා කළා (Lag වෙන්නේ නෑ)
+    lastDragTime = now;
+
+    hasDraggedBuilding = true;
+    updateDragPos(e.clientX, e.clientY);
+  }
+});
+
+window.addEventListener(
+  "touchmove",
+  (e) => {
+    if (isDraggingFromPanel && GameState.mode === "placement_mode") {
+      e.preventDefault();
+      let now = Date.now();
+      if (now - lastDragTime < 15) return; // 🌟 පරතරය 15ms ට සීමා කළා
+      lastDragTime = now;
+
+      hasDraggedBuilding = true;
+      updateDragPos(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  },
+  { passive: false },
+);
+
+// 3. අතාරිද්දිම (Drop කරද්දී) හරියටම ඒ තැන ගොඩනැගිල්ල හදනවා
+window.addEventListener("mouseup", (e) => {
+  if (isDraggingFromPanel) {
+    isDraggingFromPanel = false;
+    if (hasDraggedBuilding) attemptPlacement();
+  }
+});
+
+window.addEventListener("touchend", (e) => {
+  if (isDraggingFromPanel) {
+    isDraggingFromPanel = false;
+    // ඇදගෙන ඇවිත් අතෑරියොත් විතරක් ගොඩනැගිල්ල හදනවා
+    if (hasDraggedBuilding) attemptPlacement();
+  }
+});
+
+// Pointer එක තියෙන තැනට අදාළ කොටුව හොයන Function එක
+function updateDragPos(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  let x = clientX - rect.left;
+  let y = clientY - rect.top;
+
+  const { type } = GameState.selectedBuilding || { type: "" };
+
+  // අපි කලින් හැදුවා වගේ Wall එක දිගටම හදද්දි හැර අනිත් වෙලාවට ඇඟිල්ලට උඩින් පේන්න -70 Offset එක දෙනවා
+  if (type === "Wall" && GameState.lastWallPos) {
+    const gridPos = screenToIso(x, y);
+    mouse.gridX = Math.floor(gridPos.x);
+    mouse.gridY = Math.floor(gridPos.y);
+  } else {
+    const gridPos = screenToIso(x, y - 70);
+    mouse.gridX = Math.floor(gridPos.x);
+    mouse.gridY = Math.floor(gridPos.y);
+  }
+}
