@@ -2170,8 +2170,8 @@ canvas.addEventListener(
           mouse.gridX = Math.floor(gridPos.x);
           mouse.gridY = Math.floor(gridPos.y);
         } else {
-          // පළවෙනි Wall එකටයි, අනිත් ගොඩනැගිලි වලටයි -70 තියෙනවා (ඇඟිල්ලෙන් වැහෙන්නේ නෑ)
-          const gridPos = screenToIso(touchStartX, touchStartY - 70);
+          // පළවෙනි Wall එකටයි, අනිත් ගොඩනැගිලි වලටයි -20 තියෙනවා (ඇඟිල්ලෙන් වැහෙන්නේ නෑ)
+          const gridPos = screenToIso(touchStartX, touchStartY - 20);
           mouse.gridX = Math.floor(gridPos.x);
           mouse.gridY = Math.floor(gridPos.y);
         }
@@ -2225,13 +2225,13 @@ canvas.addEventListener(
         touchMoved = true;
         const { type } = GameState.selectedBuilding;
 
-        // 🌟 මෙතනත් ඒ විදියටම Wall Chaining වලට -70 අයින් කරා
+        // 🌟 මෙතනත් ඒ විදියටම Wall Chaining වලට -20 අයින් කරා
         if (type === "Wall" && GameState.lastWallPos) {
           const gridPos = screenToIso(currentX, currentY);
           mouse.gridX = Math.floor(gridPos.x);
           mouse.gridY = Math.floor(gridPos.y);
         } else {
-          const gridPos = screenToIso(currentX, currentY - 70);
+          const gridPos = screenToIso(currentX, currentY - 20);
           mouse.gridX = Math.floor(gridPos.x);
           mouse.gridY = Math.floor(gridPos.y);
         }
@@ -3155,7 +3155,7 @@ function updateDragPos(clientX, clientY) {
     mouse.gridX = Math.floor(gridPos.x);
     mouse.gridY = Math.floor(gridPos.y);
   } else {
-    const gridPos = screenToIso(x, y - 70);
+    const gridPos = screenToIso(x, y - 40);
     mouse.gridX = Math.floor(gridPos.x);
     mouse.gridY = Math.floor(gridPos.y);
   }
