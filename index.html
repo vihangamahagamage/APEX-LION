@@ -1,182 +1,221 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>APEX-LION – The Legend of Hela Warriors</title>
-    <link rel="icon" type="image/svg" href="Assets/logo.svg">
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Style Sheet -->
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+    <link rel="icon" type="image/svg" href="Assets/logo.png" />
 
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Poppins:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
     <!-- LANDING PAGE OVERLAY -->
     <div id="landing-wrapper">
-        <div class="scene"></div>
-        <canvas id="grain"></canvas>
-        <div class="ui">
-            <div class="title-wrap">
-                <div class="game-title">APΞX-LION</div>
-            </div>
-            <div class="subtitle">The Legend of Hela Warriors</div>
-            <div class="divider"></div>
-            
-            <div id="high-score-display" class="high-score-display">
-                🏆 Best Record: Level <span id="best-level-text">0</span>
-            </div>
-            
-            <div class="btn-group">
-                <button id="btn-play" class="btn btn-primary">
-                    <span class="btn-icon">⚔</span> PLAY GAME
-                </button>
-                <button id="btn-open-settings" class="btn">
-                    <span class="btn-icon">⚙</span> SETTINGS
-                </button>
-                <button id="btn-exit" class="btn">
-                    <span class="btn-icon">✕</span> EXIT
-                </button>
-            </div>
+      <div class="scene"></div>
+      <canvas id="grain"></canvas>
+      <div class="ui">
+        <div class="title-wrap">
+          <div class="game-title">APΞX-LION</div>
         </div>
+        <div class="subtitle">The Legend of Hela Warriors</div>
+        <div class="divider"></div>
+
+        <div id="high-score-display" class="high-score-display">
+          🏆 Best Record: Level <span id="best-level-text">0</span>
+        </div>
+
+        <div class="btn-group">
+          <button id="btn-play" class="btn btn-primary">
+            <span class="btn-icon">⚔</span> PLAY GAME
+          </button>
+          <button id="btn-open-settings" class="btn">
+            <span class="btn-icon">⚙</span> SETTINGS
+          </button>
+          <button id="btn-exit" class="btn">
+            <span class="btn-icon">✕</span> EXIT
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- GAME UI & CANVAS -->
     <div id="loading-screen">
-        <div class="loading-box">
-            <h1 class="loading-title">Loading Assets...</h1>
-            <div class="progress-bar-container">
-                <div id="progress-bar"></div>
-            </div>
-            <p id="loading-text">0%</p>
+      <div class="loading-box">
+        <h1 class="loading-title">Loading Assets...</h1>
+        <div class="progress-bar-container">
+          <div id="progress-bar"></div>
         </div>
+        <p id="loading-text">0%</p>
+      </div>
     </div>
 
     <div id="portrait-warning">
-        <div class="warning-box">
-            <div class="rotate-icon">📱🔄</div>
-            <h2>Please Rotate Device!</h2>
-            <p>Please hold your device in Landscape mode for the best experience.</p>
-        </div>
+      <div class="warning-box">
+        <div class="rotate-icon">📱🔄</div>
+        <h2>Please Rotate Device!</h2>
+        <p>
+          Please hold your device in Landscape mode for the best experience.
+        </p>
+      </div>
     </div>
 
     <div id="top-left-container">
-        <div id="ui-resources" class="premium-panel">
-            <div class="resource">
-                <span class="icon gold-icon">🪙</span>
-                <div class="res-col">
-                    <span class="label">GOLD</span>
-                    <span id="gold-count" class="val">1000</span>
-                </div>
-            </div>
-            <div class="divider-game divider-styled"></div>
-            <div class="resource">
-                <span class="icon rice-icon">🌾</span>
-                <div class="res-col">
-                    <span class="label">RICE</span>
-                    <span id="rice-count" class="val">500</span>
-                </div>
-            </div>
+      <div id="ui-resources" class="premium-panel">
+        <div class="resource">
+          <span class="icon gold-icon">🪙</span>
+          <div class="res-col">
+            <span class="label">GOLD</span>
+            <span id="gold-count" class="val">1000</span>
+          </div>
         </div>
-        <div id="pan-btn" class="premium-panel">🗺️ PAN MAP TO EXPLORE</div>
-        <div id="system-message"></div>
+        <div class="divider-game divider-styled"></div>
+        <div class="resource">
+          <span class="icon rice-icon">🌾</span>
+          <div class="res-col">
+            <span class="label">RICE</span>
+            <span id="rice-count" class="val">500</span>
+          </div>
+        </div>
+      </div>
+      <div id="pan-btn" class="premium-panel">🗺️ PAN MAP TO EXPLORE</div>
+      <div id="system-message"></div>
     </div>
 
     <div id="top-right-container">
-        <button id="btn-settings" class="icon-btn premium-panel">⚙️</button>
-        <button id="btn-pause" class="icon-btn premium-panel">⏸️</button>
-        <button id="btn-fullscreen" class="icon-btn premium-panel" title="Fullscreen">🔲</button>
-        <button id="btn-zoom-in" class="icon-btn premium-panel">➕</button>
-        <button id="btn-zoom-out" class="icon-btn premium-panel">➖</button>
+      <button id="btn-settings" class="icon-btn premium-panel">⚙️</button>
+      <button id="btn-pause" class="icon-btn premium-panel">⏸️</button>
+      <button
+        id="btn-fullscreen"
+        class="icon-btn premium-panel"
+        title="Fullscreen"
+      >
+        🔲
+      </button>
+      <button id="btn-zoom-in" class="icon-btn premium-panel">➕</button>
+      <button id="btn-zoom-out" class="icon-btn premium-panel">➖</button>
     </div>
 
     <!-- Level Status Container -->
     <div id="level-status-container" class="level-status-container">
-        <div id="level-status-text" class="level-status-text"></div>
-        <button id="btn-early-wave" class="btn-early-wave"></button>
+      <div id="level-status-text" class="level-status-text"></div>
+      <button id="btn-early-wave" class="btn-early-wave"></button>
     </div>
 
     <!-- Royal Advisor Panel -->
     <div id="ai-guide-panel" class="ai-guide-panel">
-        <div class="ai-header">
-            <span class="ai-icon">👑</span><br>
-            <span class="ai-title">ROYAL ADVISOR</span>
-            <hr class="ai-divider">
-        </div>
-        <div id="ai-chat-text" class="ai-chat-text"></div>
+      <div class="ai-header">
+        <span class="ai-icon">👑</span><br />
+        <span class="ai-title">ROYAL ADVISOR</span>
+        <hr class="ai-divider" />
+      </div>
+      <div id="ai-chat-text" class="ai-chat-text"></div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
     <div id="bottom-dock-wrapper">
-        <button id="panel-toggle-btn" class="panel-toggle-btn">▼</button>
-        <div id="ui-bottom" class="premium-panel"></div>
+      <button id="panel-toggle-btn" class="panel-toggle-btn">▼</button>
+      <div id="ui-bottom" class="premium-panel"></div>
     </div>
 
     <!-- Settings Modal -->
     <div id="settings-modal" class="settings-modal">
-        <h2 class="settings-title">⚙️ Game Settings</h2>
-        
-        <div class="settings-row">
-            <label class="settings-label">Music Volume: <span id="bgm-vol-text">30%</span></label>
-            <input type="range" id="bgm-slider" min="0" max="100" value="30" class="settings-slider">
-        </div>
+      <h2 class="settings-title">⚙️ Game Settings</h2>
 
-        <div class="settings-row">
-            <label class="settings-label">Effects Volume: <span id="sfx-vol-text">80%</span></label>
-            <input type="range" id="sfx-slider" min="0" max="100" value="80" class="settings-slider">
-        </div>
+      <div class="settings-row">
+        <label class="settings-label"
+          >Music Volume: <span id="bgm-vol-text">30%</span></label
+        >
+        <input
+          type="range"
+          id="bgm-slider"
+          min="0"
+          max="100"
+          value="30"
+          class="settings-slider"
+        />
+      </div>
 
-        <div class="settings-row">
-            <label class="settings-label settings-inline-label">Select Land:</label>
-            <select id="land-select" class="settings-select">
-                <option value="land1" selected>Land 1</option>
-                <option value="land2">Land 2</option>
-                <option value="land3">Land 3</option>
-            </select>
-        </div>
+      <div class="settings-row">
+        <label class="settings-label"
+          >Effects Volume: <span id="sfx-vol-text">80%</span></label
+        >
+        <input
+          type="range"
+          id="sfx-slider"
+          min="0"
+          max="100"
+          value="80"
+          class="settings-slider"
+        />
+      </div>
 
-        <div class="settings-row">
-            <label class="settings-label settings-inline-label">Difficulty:</label>
-            <select id="difficulty-select" class="settings-select">
-                <option value="easy">Easy (Less Enemies, Less Rewards)</option>
-                <option value="normal" selected>Normal</option>
-                <option value="hard">Hard (More Enemies, More Rewards)</option>
-            </select>
-        </div>
-        
-        <div class="settings-center-row">
-            <button id="btn-force-restart" class="btn-force-restart">⚠️ RESTART GAME</button>
-        </div>
-        
-        <button id="btn-close-settings" class="btn-close-settings">Save & Close</button>
+      <div class="settings-row">
+        <label class="settings-label settings-inline-label">Select Land:</label>
+        <select id="land-select" class="settings-select">
+          <option value="land1" selected>Land 1</option>
+          <option value="land2">Land 2</option>
+          <option value="land3">Land 3</option>
+        </select>
+      </div>
+
+      <div class="settings-row">
+        <label class="settings-label settings-inline-label">Difficulty:</label>
+        <select id="difficulty-select" class="settings-select">
+          <option value="easy">Easy (Less Enemies, Less Rewards)</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard (More Enemies, More Rewards)</option>
+        </select>
+      </div>
+
+      <div class="settings-center-row">
+        <button id="btn-force-restart" class="btn-force-restart">
+          ⚠️ RESTART GAME
+        </button>
+      </div>
+
+      <button id="btn-close-settings" class="btn-close-settings">
+        Save & Close
+      </button>
     </div>
 
     <!-- Pause Overlay -->
     <div id="pause-overlay" class="pause-overlay">
-        <h1 class="pause-title">PAUSED</h1>
-        <button id="btn-resume-game" class="btn-resume-game">▶ RESUME</button>
+      <h1 class="pause-title">PAUSED</h1>
+      <button id="btn-resume-game" class="btn-resume-game">▶ RESUME</button>
     </div>
 
     <!-- Game Over Popup -->
     <div id="game-over-popup" class="game-over-popup">
-        <h1 class="game-over-title">💀 GAME OVER 💀</h1>
-        <p class="game-over-desc">Your base has been destroyed!</p>
-        <p id="game-over-level-text" class="game-over-level-text"></p>
-        <button id="btn-restart-game" class="btn-restart-game">🔄 RESTART GAME</button>
+      <h1 class="game-over-title">💀 GAME OVER 💀</h1>
+      <p class="game-over-desc">Your base has been destroyed!</p>
+      <p id="game-over-level-text" class="game-over-level-text"></p>
+      <button id="btn-restart-game" class="btn-restart-game">
+        🔄 RESTART GAME
+      </button>
     </div>
 
     <!-- Level Cleared Popup -->
     <div id="level-popup" class="level-popup">
-        <h2 id="level-popup-title" class="level-popup-title"></h2>
-        <p class="level-popup-desc">You have successfully defended the kingdom!</p>
-        <p id="level-popup-reward" class="level-popup-reward"></p>
-        <p class="level-popup-footer">Starting next level automatically...</p>
+      <h2 id="level-popup-title" class="level-popup-title"></h2>
+      <p class="level-popup-desc">
+        You have successfully defended the kingdom!
+      </p>
+      <p id="level-popup-reward" class="level-popup-reward"></p>
+      <p class="level-popup-footer">Starting next level automatically...</p>
     </div>
 
     <!-- Game Scripts -->
     <script src="game.js"></script>
-</body>
+  </body>
 </html>
