@@ -2024,11 +2024,15 @@ function showMessage(msg, isError = false) {
   }
 }
 
+// --- PLACEMENT MODE FUNCTIONS ---
+
 function setPlacementMode(type, goldCost, riceCost) {
   if (GameState.isPaused) return;
   const size = type === "Wall" ? 1 : type === "Tower" ? 2 : 3;
   GameState.mode = "placement_mode";
   GameState.selectedBuilding = { type, goldCost, riceCost, size };
+  GameState.lastWallPos = null; // 🌟 අලුතින්: Placement එක පටන් ගද්දි පරණ Wall එක අමතක කරනවා
+
   const btnCancel = document.getElementById("btn-cancel");
   if (btnCancel) btnCancel.classList.remove("hidden");
   canvas.style.cursor = "crosshair";
@@ -2038,6 +2042,8 @@ function setPlacementMode(type, goldCost, riceCost) {
 function cancelPlacement() {
   GameState.mode = "normal";
   GameState.selectedBuilding = null;
+  GameState.lastWallPos = null; // 🌟 අලුතින්: කැන්සල් කරාමත් පරණ Wall එක අමතක කරනවා
+
   const btnCancel = document.getElementById("btn-cancel");
   if (btnCancel) btnCancel.classList.add("hidden");
   canvas.style.cursor = "grab";
@@ -2156,9 +2162,19 @@ canvas.addEventListener(
         dragStart.x = touchStartX - camera.x;
         dragStart.y = touchStartY - camera.y;
       } else if (GameState.mode === "placement_mode") {
-        const gridPos = screenToIso(touchStartX, touchStartY - 70);
-        mouse.gridX = Math.floor(gridPos.x);
-        mouse.gridY = Math.floor(gridPos.y);
+        const { type } = GameState.selectedBuilding;
+
+        // 🌟 Wall එක දිගටම හදද්දි (Chaining) විතරක් -70 අයින් කරනවා, එතකොට කොළ කොටුව හරියටම ටච් කරන්න පුළුවන්!
+        if (type === "Wall" && GameState.lastWallPos) {
+          const gridPos = screenToIso(touchStartX, touchStartY);
+          mouse.gridX = Math.floor(gridPos.x);
+          mouse.gridY = Math.floor(gridPos.y);
+        } else {
+          // පළවෙනි Wall එකටයි, අනිත් ගොඩනැගිලි වලටයි -70 තියෙනවා (ඇඟිල්ලෙන් වැහෙන්නේ නෑ)
+          const gridPos = screenToIso(touchStartX, touchStartY - 70);
+          mouse.gridX = Math.floor(gridPos.x);
+          mouse.gridY = Math.floor(gridPos.y);
+        }
       }
     }
   },
@@ -2193,7 +2209,6 @@ canvas.addEventListener(
       let currentX = e.touches[0].clientX;
       let currentY = e.touches[0].clientY;
 
-      // ඇඟිල්ල ටිකක් හරි හෙල්ලුනොත් ඒක Drag එකක් විදියට ගන්නවා (Tap එකක් නෙවෙයි)
       if (Math.hypot(currentX - touchStartX, currentY - touchStartY) > 10) {
         touchMoved = true;
       }
@@ -2208,9 +2223,18 @@ canvas.addEventListener(
         if (camera.y !== oldY) dragStart.y = currentY - camera.y;
       } else if (GameState.mode === "placement_mode") {
         touchMoved = true;
-        const gridPos = screenToIso(currentX, currentY - 70);
-        mouse.gridX = Math.floor(gridPos.x);
-        mouse.gridY = Math.floor(gridPos.y);
+        const { type } = GameState.selectedBuilding;
+
+        // 🌟 මෙතනත් ඒ විදියටම Wall Chaining වලට -70 අයින් කරා
+        if (type === "Wall" && GameState.lastWallPos) {
+          const gridPos = screenToIso(currentX, currentY);
+          mouse.gridX = Math.floor(gridPos.x);
+          mouse.gridY = Math.floor(gridPos.y);
+        } else {
+          const gridPos = screenToIso(currentX, currentY - 70);
+          mouse.gridX = Math.floor(gridPos.x);
+          mouse.gridY = Math.floor(gridPos.y);
+        }
       }
     }
   },
@@ -2226,9 +2250,8 @@ window.addEventListener("touchend", (e) => {
   let touchDuration = Date.now() - touchStartTime;
 
   if (GameState.mode === "placement_mode") {
-    if (touchMoved) attemptPlacement();
+    attemptPlacement();
   } else if (GameState.mode === "normal") {
-    // 🌟 ඇඟිල්ල ලොකුවට හෙල්ලුවේ නැත්නම් සහ ඉක්මනින් ඉස්සුවා නම්, ඒක Tap එකක්! (ක්ෂණිකව Click වෙනවා) 🌟
     if (!touchMoved && touchDuration < 400) {
       handleGameClick(touchStartX, touchStartY);
     }
@@ -2337,6 +2360,21 @@ function attemptPlacement() {
 
   const { type, goldCost, riceCost, size } = GameState.selectedBuilding;
 
+  // 🌟 අලුත් Wall Logic එක 🌟
+  if (type === "Wall" && GameState.lastWallPos) {
+    // කලින් තිබ්බ Wall එකට යා වෙලාද තියෙන්නේ කියලා බලනවා
+    let isAdjacent =
+      Math.abs(gx - GameState.lastWallPos.x) +
+        Math.abs(gy - GameState.lastWallPos.y) ===
+      1;
+
+    // යා වෙලා නැත්නම් (වෙන තැනක් ටච් උනොත්) කෙලින්ම Cancel වෙනවා
+    if (!isAdjacent) {
+      cancelPlacement();
+      return; // මෙතනින් නවතින නිසා Wall එක හැදෙන්නේ නෑ
+    }
+  }
+
   if (
     type === "Palace" &&
     GameState.buildings.some((b) => b.type === "Palace")
@@ -2363,6 +2401,8 @@ function attemptPlacement() {
 
     if (type === "Wall") {
       playSound("wall_build");
+      // 🌟 අලුතින්: දැන් හැදුව Wall එකේ තැන මතක තියාගන්නවා ඊළඟ එකට
+      GameState.lastWallPos = { x: gx, y: gy };
     } else if (type === "Tower") {
       playSound("tower_build");
     } else {
@@ -2391,6 +2431,8 @@ function attemptPlacement() {
     }
 
     showMessage(`${type} constructed!`);
+
+    // Wall එකක් නෙවෙයි නම් විතරක් Cancel Placement වෙනවා (Wall එක දිගටම හදන්න දෙනවා)
     if (type !== "Wall") {
       cancelPlacement();
     }
@@ -2437,17 +2479,16 @@ function drawSigiriyaRockBase() {
   ctx.stroke();
 }
 
+// ==========================================
+// --- GAME RENDER LOOP (WITH WALL GUIDES) ---
+// ==========================================
+
 function drawGame() {
   try {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-
-    // High-DPI Screen වලට හරියන්න Canvas එක Scale කරනවා
     ctx.scale(dpr, dpr);
-
-    // 🌟 Zoom out කරද්දී පින්තූර කැඩෙන එක නවත්වන ප්‍රධාන කෝඩ් එක (High Quality Smoothing) 🌟
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
@@ -2495,30 +2536,6 @@ function drawGame() {
         }
       }
       ctx.restore();
-
-      if (GameState.mode === "placement_mode") {
-        for (let y = 0; y < MAP_ROWS; y++) {
-          for (let x = 0; x < MAP_COLS; x++) {
-            const size = GameState.selectedBuilding.size;
-            const bx = mouse.gridX;
-            const by = mouse.gridY;
-            if (x >= bx && x < bx + size && y >= by && y < by + size) {
-              const pos = isoToScreen(x, y);
-              let isBlocked = false;
-              for (let dx = 0; dx < size; dx++)
-                for (let dy = 0; dy < size; dy++)
-                  if (isTileBlocked(bx + dx, by + dy, null)) isBlocked = true;
-              drawDiamond(
-                ctx,
-                pos.x,
-                pos.y,
-                isBlocked ? "rgba(255, 0, 0, 0.6)" : "rgba(0, 255, 0, 0.6)",
-                "#fff",
-              );
-            }
-          }
-        }
-      }
     } else {
       drawSigiriyaRockBase();
       for (let y = 0; y < MAP_ROWS; y++) {
@@ -2531,27 +2548,79 @@ function drawGame() {
             (x + y) % 2 === 0 ? "#5A9E24" : "#4E8D1E",
             "#3E7017",
           );
-          if (GameState.mode === "placement_mode") {
-            const size = GameState.selectedBuilding.size;
-            const bx = mouse.gridX;
-            const by = mouse.gridY;
-            if (x >= bx && x < bx + size && y >= by && y < by + size) {
-              let isBlocked = false;
-              for (let dx = 0; dx < size; dx++)
-                for (let dy = 0; dy < size; dy++)
-                  if (isTileBlocked(bx + dx, by + dy, null)) isBlocked = true;
-              drawDiamond(
-                ctx,
-                pos.x,
-                pos.y,
-                isBlocked ? "rgba(255, 0, 0, 0.6)" : "rgba(0, 255, 0, 0.6)",
-                "#fff",
-              );
-            }
+        }
+      }
+    }
+
+    // 🌟 අලුත් PLACEMENT GUIDE & HIGHLIGHT 🌟
+    if (GameState.mode === "placement_mode") {
+      const { type, size } = GameState.selectedBuilding;
+
+      // 1. මීළඟට Wall එක තියන්න පුළුවන් තැන් 4 ළා කොළ පාටින් බැබළෙන්න සැලැස්වීම
+      if (type === "Wall" && GameState.lastWallPos) {
+        const lx = GameState.lastWallPos.x;
+        const ly = GameState.lastWallPos.y;
+        const dirs = [
+          { dx: 0, dy: -1 },
+          { dx: 1, dy: 0 },
+          { dx: 0, dy: 1 },
+          { dx: -1, dy: 0 },
+        ];
+
+        dirs.forEach((d) => {
+          let nx = lx + d.dx;
+          let ny = ly + d.dy;
+          if (!isTileBlocked(nx, ny, null)) {
+            let p = isoToScreen(nx, ny);
+            // තත්පරෙන් තත්පරේට බැබළෙන විදියට ඇනිමේෂන් එකක් (Pulse)
+            let pulseAlpha = 0.2 + Math.abs(Math.sin(Date.now() * 0.005)) * 0.5;
+            drawDiamond(
+              ctx,
+              p.x,
+              p.y,
+              `rgba(0, 255, 0, ${pulseAlpha})`,
+              "#00FF00",
+            );
+          }
+        });
+      }
+
+      // 2. ඇඟිල්ල / Mouse එක තියෙන තැන කොටුව පෙන්නන එක
+      const bx = mouse.gridX;
+      const by = mouse.gridY;
+      if (bx >= 0 && bx < MAP_COLS && by >= 0 && by < MAP_ROWS) {
+        let isBlocked = false;
+
+        for (let dx = 0; dx < size; dx++) {
+          for (let dy = 0; dy < size; dy++) {
+            if (isTileBlocked(bx + dx, by + dy, null)) isBlocked = true;
+          }
+        }
+
+        // Wall එකක් වෙලා, යා වෙලා නැත්නම් ඒක Block (රතු පාට) විදියට පෙන්නනවා
+        if (type === "Wall" && GameState.lastWallPos) {
+          let isAdj =
+            Math.abs(bx - GameState.lastWallPos.x) +
+              Math.abs(by - GameState.lastWallPos.y) ===
+            1;
+          if (!isAdj) isBlocked = true;
+        }
+
+        for (let dx = 0; dx < size; dx++) {
+          for (let dy = 0; dy < size; dy++) {
+            const pos = isoToScreen(bx + dx, by + dy);
+            drawDiamond(
+              ctx,
+              pos.x,
+              pos.y,
+              isBlocked ? "rgba(255, 0, 0, 0.6)" : "rgba(0, 255, 0, 0.6)",
+              "#fff",
+            );
           }
         }
       }
     }
+    // -------------------------------------------------------------
 
     let renderQueue = [];
     GameState.buildings.forEach((b) => {
@@ -2590,39 +2659,44 @@ function drawGame() {
       item.obj.draw(ctx, pos.x, pos.y);
     });
 
+    // --- ගොඩනැගිලි Preview එක (Ghost Image) ---
     if (
       GameState.mode === "placement_mode" &&
       mouse.gridX >= 0 &&
       mouse.gridY >= 0
     ) {
       const { type, size } = GameState.selectedBuilding;
-      const bx = mouse.gridX;
-      const by = mouse.gridY;
-      const pos = isoToScreen(bx, by);
 
-      ctx.save();
-      ctx.globalAlpha = 0.6;
-      let imgKey =
-        type === "Elephant Pen"
-          ? "elephantPen"
-          : type === "Paddy Field"
-            ? "paddyField"
-            : type.toLowerCase();
-      let img = images[imgKey];
+      // 🌟 Wall එක දිගටම හදද්දි (Chaining) Ghost Image එක පෙන්වන්නේ නෑ, කොළ පාට කොටු විතරයි පෙන්වන්නේ! 🌟
+      if (!(type === "Wall" && GameState.lastWallPos)) {
+        const bx = mouse.gridX;
+        const by = mouse.gridY;
+        const pos = isoToScreen(bx, by);
 
-      if (img && img.complete && img.naturalWidth > 0) {
-        let imageScale = 1.0;
-        let imgW = size * TILE_W * imageScale;
-        let imgH = imgW * (img.naturalHeight / img.naturalWidth);
-        if (type === "Wall") {
-          imgW = 60;
-          imgH = imgW * (img.naturalHeight / img.naturalWidth);
+        ctx.save();
+        ctx.globalAlpha = 0.6;
+        let imgKey =
+          type === "Elephant Pen"
+            ? "elephantPen"
+            : type === "Paddy Field"
+              ? "paddyField"
+              : type.toLowerCase();
+        let img = images[imgKey];
+
+        if (img && img.complete && img.naturalWidth > 0) {
+          let imageScale = 1.0;
+          let imgW = size * TILE_W * imageScale;
+          let imgH = imgW * (img.naturalHeight / img.naturalWidth);
+          if (type === "Wall") {
+            imgW = 60;
+            imgH = imgW * (img.naturalHeight / img.naturalWidth);
+          }
+          const bottomY = pos.y - TILE_H / 2 + size * TILE_H;
+          let finalY = bottomY - imgH + (size * TILE_H * (imageScale - 1)) / 2;
+          ctx.drawImage(img, pos.x - imgW / 2, finalY, imgW, imgH);
         }
-        const bottomY = pos.y - TILE_H / 2 + size * TILE_H;
-        let finalY = bottomY - imgH + (size * TILE_H * (imageScale - 1)) / 2;
-        ctx.drawImage(img, pos.x - imgW / 2, finalY, imgW, imgH);
+        ctx.restore();
       }
-      ctx.restore();
     }
 
     for (let i = GameState.floatingTexts.length - 1; i >= 0; i--) {
