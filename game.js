@@ -2091,6 +2091,9 @@ document.body.addEventListener("click", (e) => {
 // --- ADVANCED MOUSE & TOUCH CONTROLS ---
 // ==========================================
 let isTouchInteraction = false;
+let touchStartX = 0;
+let touchStartY = 0;
+let touchStartTime = 0;
 
 // --- MOUSE EVENTS (For Desktop) ---
 canvas.addEventListener("mousedown", (e) => {
@@ -2141,35 +2144,35 @@ canvas.addEventListener(
       );
       return;
     }
-    touchMoved = false;
 
-    if (GameState.mode === "normal") {
-      isDragging = true;
-      dragStart.x = e.touches[0].clientX - camera.x;
-      dragStart.y = e.touches[0].clientY - camera.y;
-    } else if (GameState.mode === "placement_mode") {
-      const gridPos = screenToIso(
-        e.touches[0].clientX,
-        e.touches[0].clientY - 70,
-      );
-      mouse.gridX = Math.floor(gridPos.x);
-      mouse.gridY = Math.floor(gridPos.y);
+    if (e.touches.length === 1) {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+      touchMoved = false;
+
+      if (GameState.mode === "normal") {
+        isDragging = true;
+        dragStart.x = touchStartX - camera.x;
+        dragStart.y = touchStartY - camera.y;
+      } else if (GameState.mode === "placement_mode") {
+        const gridPos = screenToIso(touchStartX, touchStartY - 70);
+        mouse.gridX = Math.floor(gridPos.x);
+        mouse.gridY = Math.floor(gridPos.y);
+      }
     }
   },
   { passive: false },
 );
 
-// Throttle කිරීම සඳහා variable එකක් (මේක event එකට උඩින් තියෙන්න ඕනේ)
 let lastTouchMoveTime = 0;
-
 canvas.addEventListener(
   "touchmove",
   (e) => {
     e.preventDefault();
-    touchMoved = true;
 
-    // Zoom Logic එක
     if (e.touches.length === 2 && initialPinchDistance !== null) {
+      touchMoved = true;
       let currentDistance = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY,
@@ -2182,25 +2185,30 @@ canvas.addEventListener(
       return;
     }
 
-    // Drag Logic එක Throttle කිරීම
     let now = Date.now();
     if (now - lastTouchMoveTime < 15) return;
     lastTouchMoveTime = now;
 
     if (e.touches.length === 1) {
+      let currentX = e.touches[0].clientX;
+      let currentY = e.touches[0].clientY;
+
+      // ඇඟිල්ල ටිකක් හරි හෙල්ලුනොත් ඒක Drag එකක් විදියට ගන්නවා (Tap එකක් නෙවෙයි)
+      if (Math.hypot(currentX - touchStartX, currentY - touchStartY) > 10) {
+        touchMoved = true;
+      }
+
       if (GameState.mode === "normal" && isDragging) {
-        camera.x = e.touches[0].clientX - dragStart.x;
-        camera.y = e.touches[0].clientY - dragStart.y;
+        camera.x = currentX - dragStart.x;
+        camera.y = currentY - dragStart.y;
         let oldX = camera.x;
         let oldY = camera.y;
         clampCamera();
-        if (camera.x !== oldX) dragStart.x = e.touches[0].clientX - camera.x;
-        if (camera.y !== oldY) dragStart.y = e.touches[0].clientY - camera.y;
+        if (camera.x !== oldX) dragStart.x = currentX - camera.x;
+        if (camera.y !== oldY) dragStart.y = currentY - camera.y;
       } else if (GameState.mode === "placement_mode") {
-        const gridPos = screenToIso(
-          e.touches[0].clientX,
-          e.touches[0].clientY - 70,
-        );
+        touchMoved = true;
+        const gridPos = screenToIso(currentX, currentY - 70);
         mouse.gridX = Math.floor(gridPos.x);
         mouse.gridY = Math.floor(gridPos.y);
       }
@@ -2211,12 +2219,19 @@ canvas.addEventListener(
 
 window.addEventListener("touchend", (e) => {
   isDragging = false;
-  if (e.touches.length < 2) {
+  if (e.changedTouches.length < 2) {
     initialPinchDistance = null;
   }
 
+  let touchDuration = Date.now() - touchStartTime;
+
   if (GameState.mode === "placement_mode") {
-    attemptPlacement();
+    if (touchMoved) attemptPlacement();
+  } else if (GameState.mode === "normal") {
+    // 🌟 ඇඟිල්ල ලොකුවට හෙල්ලුවේ නැත්නම් සහ ඉක්මනින් ඉස්සුවා නම්, ඒක Tap එකක්! (ක්ෂණිකව Click වෙනවා) 🌟
+    if (!touchMoved && touchDuration < 400) {
+      handleGameClick(touchStartX, touchStartY);
+    }
   }
 
   setTimeout(() => {
@@ -2224,85 +2239,89 @@ window.addEventListener("touchend", (e) => {
   }, 500);
 });
 
-// --- CLICK EVENT (For Desktop & Normal Interactions) ---
-canvas.addEventListener("click", (e) => {
-  if (isTouchInteraction) return;
+// --- REUSABLE CLICK FUNCTION (Mobile Tap & Desktop Click) ---
+function handleGameClick(clientX, clientY) {
+  let exactIso = screenToIso(clientX, clientY);
+  let ex = exactIso.x;
+  let ey = exactIso.y;
+  let clickedFriendly = null;
+  let myTroops = [
+    ...GameState.soldiers,
+    ...GameState.elephants,
+    ...GameState.horses,
+    ...GameState.villagers,
+  ];
 
-  if (GameState.isPaused) return;
-  if (e.target && e.target.tagName === "BUTTON") return;
+  for (let u of myTroops) {
+    if (getDistance({ x: ex, y: ey }, u) < 0.8) {
+      clickedFriendly = u;
+      break;
+    }
+  }
 
-  if (GameState.mode === "normal") {
-    let clientX = e.clientX;
-    let clientY = e.clientY;
-    let exactIso = screenToIso(clientX, clientY);
-    let ex = exactIso.x;
-    let ey = exactIso.y;
-    let clickedFriendly = null;
-    let myTroops = [
-      ...GameState.soldiers,
-      ...GameState.elephants,
-      ...GameState.horses,
-      ...GameState.villagers,
-    ];
-    for (let u of myTroops) {
-      if (getDistance({ x: ex, y: ey }, u) < 0.8) {
-        clickedFriendly = u;
+  if (clickedFriendly) {
+    if (GameState.tutorialState === "select_troop") {
+      GameState.tutorialState = "command_attack";
+      showRoyalAdvisor([
+        "Excellent! The soldier is ready for your command.",
+        "Now, CLICK on an Enemy to order the attack!",
+      ]);
+    }
+    GameState.selectedUnit = clickedFriendly;
+    GameState.floatingTexts.push(
+      new FloatingText(
+        clickedFriendly.x,
+        clickedFriendly.y,
+        "Ready!",
+        "#00FF00",
+      ),
+    );
+    return;
+  }
+
+  if (GameState.selectedUnit) {
+    let clickedEnemy = null;
+    for (let en of GameState.enemies) {
+      if (getDistance({ x: ex, y: ey }, en) < 0.8) {
+        clickedEnemy = en;
         break;
       }
     }
 
-    if (clickedFriendly) {
-      if (GameState.tutorialState === "select_troop") {
-        GameState.tutorialState = "command_attack";
-        showRoyalAdvisor([
-          "Excellent! The soldier is ready for your command.",
-          "Now, CLICK on an Enemy to order the attack!",
-        ]);
-      }
-      GameState.selectedUnit = clickedFriendly;
-      GameState.floatingTexts.push(
-        new FloatingText(
-          clickedFriendly.x,
-          clickedFriendly.y,
-          "Ready!",
-          "#00FF00",
-        ),
-      );
-      return;
+    if (GameState.tutorialState === "command_attack") {
+      GameState.tutorialState = "done";
+      showRoyalAdvisor([
+        "Brilliant strategy, My Lord!",
+        "Your troops will now engage the target.",
+        "Defend the Palace at all costs!",
+      ]);
     }
 
-    if (GameState.selectedUnit) {
-      let clickedEnemy = null;
-      for (let en of GameState.enemies) {
-        if (getDistance({ x: ex, y: ey }, en) < 0.8) {
-          clickedEnemy = en;
-          break;
-        }
-      }
-      if (GameState.tutorialState === "command_attack") {
-        GameState.tutorialState = "done";
-        showRoyalAdvisor([
-          "Brilliant strategy, My Lord!",
-          "Your troops will now engage the target.",
-          "Defend the Palace at all costs!",
-        ]);
-      }
-      if (clickedEnemy) {
-        GameState.selectedUnit.manualTargetEnemy = clickedEnemy;
-        GameState.selectedUnit.manualTargetPos = null;
-        GameState.floatingTexts.push(
-          new FloatingText(ex, ey, "⚔️ Attack!", "#FF0000"),
-        );
-      } else {
-        GameState.selectedUnit.manualTargetPos = { x: ex, y: ey };
-        GameState.selectedUnit.manualTargetEnemy = null;
-        GameState.floatingTexts.push(
-          new FloatingText(ex, ey, "🚩 Move", "#00FA9A"),
-        );
-      }
-      GameState.selectedUnit = null;
-      return;
+    if (clickedEnemy) {
+      GameState.selectedUnit.manualTargetEnemy = clickedEnemy;
+      GameState.selectedUnit.manualTargetPos = null;
+      GameState.floatingTexts.push(
+        new FloatingText(ex, ey, "⚔️ Attack!", "#FF0000"),
+      );
+    } else {
+      GameState.selectedUnit.manualTargetPos = { x: ex, y: ey };
+      GameState.selectedUnit.manualTargetEnemy = null;
+      GameState.floatingTexts.push(
+        new FloatingText(ex, ey, "🚩 Move", "#00FA9A"),
+      );
     }
+    GameState.selectedUnit = null;
+  }
+}
+
+// --- CLICK EVENT (For Desktop & Normal Interactions) ---
+canvas.addEventListener("click", (e) => {
+  if (isTouchInteraction) return;
+  if (GameState.isPaused) return;
+  if (e.target && e.target.tagName === "BUTTON") return;
+
+  if (GameState.mode === "normal") {
+    handleGameClick(e.clientX, e.clientY);
   } else if (GameState.mode === "placement_mode") {
     const gridPos = screenToIso(e.clientX, e.clientY);
     mouse.gridX = Math.floor(gridPos.x);
